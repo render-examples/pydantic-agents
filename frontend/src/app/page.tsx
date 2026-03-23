@@ -72,6 +72,17 @@ export default function Home() {
                 History
               </button>
               <a
+                href="https://ai.pydantic.dev/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-zinc-400 hover:text-purple-600 transition-colors flex items-center gap-1.5"
+              >
+                Pydantic AI
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+              <a
                 href="https://logfire.pydantic.dev/docs/why/"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -144,16 +155,17 @@ export default function Home() {
           <div className="text-center text-sm text-zinc-400">
             <p>
               Built with{' '}
+              {' '}•{' '}
+              <a href="https://pydantic.dev/pydantic-ai" className="text-purple-600 hover:text-purple-500">
+                Pydantic AI
+              </a>
+              {' '}•{' '}
               <a href="https://www.pydantic.dev/logfire" className="text-purple-600 hover:text-purple-500">
                 Logfire
               </a>
               {' '}•{' '}
               <a href="https://render.com" className="text-purple-600 hover:text-purple-500">
                 Render
-              </a>
-              {' '}•{' '}
-              <a href="https://python.langchain.com" className="text-purple-600 hover:text-purple-500">
-                LangChain
               </a>
             </p>
           </div>

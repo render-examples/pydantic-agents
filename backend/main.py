@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     title="Render Q&A Assistant",
-    description="Production-grade AI pipeline with observable AI using LangChain, Logfire, and Render",
+    description="Production-grade AI pipeline with observable AI using Pydantic AI, Logfire, and Render",
     version="1.0.0",
     lifespan=lifespan
 )

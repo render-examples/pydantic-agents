@@ -1,6 +1,6 @@
 # Render Developer Q&A Assistant
 
-> A demo AI pipeline showcasing observable AI with LangChain, Logfire, and Render
+> A demo AI pipeline showcasing observable AI with Pydantic AI, Logfire, and Render
 
 An intelligent question-answering system that demonstrates real-world AI observability patterns. This example project shows how to build, instrument, and monitor a multi-stage LLM pipeline with full cost tracking, quality evaluation, and performance monitoring.
 
@@ -64,13 +64,13 @@ The app answers questions about deployment, databases, pricing, configuration, n
 - **Custom Metrics** - Business-specific metrics (cost, quality, iterations)
 - **SQL Queries** - Custom analytics on AI performance
 
-### LangChain Patterns
+### Pydantic AI Patterns
 
-- **Hybrid RAG Pipeline** - Semantic + lexical search with RRF ranking
-- **Chain Composition** - Sequential and parallel chain execution
-- **Multi-Model Orchestration** - Claude + GPT-4 in a single pipeline
-- **Retry Logic** - Quality gates with iterative refinement
-- **Error Handling** - Graceful degradation and fallbacks
+- **Typed Agents** - Each pipeline stage uses a `pydantic_ai.Agent` with a structured `output_type` enforced by Pydantic models
+- **Multi-Provider Orchestration** - Claude and GPT-5.4-mini agents in a single pipeline via `AnthropicProvider` / `OpenAIProvider`
+- **Parallel Evaluation** - Dual-model quality rating runs concurrently with `asyncio.gather()`
+- **Structured Outputs** - Claims, accuracy scores, and eval dimensions are parsed directly into Pydantic models (e.g. `ClaimsOutput`, `EvaluationOutput`)
+- **Usage Tracking** - Per-agent token counts via `result.usage()` feed into per-stage cost attribution
 
 ### Render Capabilities
 
@@ -94,7 +94,7 @@ The app answers questions about deployment, databases, pricing, configuration, n
 └─────────────────────────────────────────────────────────────┘
                           ↓ HTTPS
 ┌─────────────────────────────────────────────────────────────┐
-│  Backend API (FastAPI + LangChain + Logfire)                │
+│  Backend API (FastAPI + Pydantic AI + Logfire)              │
 │  Deployed as: Render Web Service (Python 3.13)              │
 │                                                             │
 │  8-Stage Pipeline:                                          │
@@ -305,7 +305,7 @@ curl -X POST https://your-service.onrender.com/admin/ingest-docs
 ### External Resources
 
 - **Logfire Documentation:** https://docs.pydantic.dev/logfire/
-- **LangChain Documentation:** https://python.langchain.com/docs/
+- **Pydantic AI Documentation:** https://ai.pydantic.dev/
 - **Render Documentation:** https://docs.render.com/
 
 ---
@@ -334,7 +334,7 @@ Built to showcase:
 
 - **Logfire** by Pydantic - AI observability platform
 - **Render** - Modern cloud platform
-- **LangChain** - AI orchestration framework
+- **Pydantic AI** - Type-safe AI agent framework
 - **OpenAI & Anthropic** - LLM providers
 
 ---

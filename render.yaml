@@ -13,7 +13,7 @@ projects:
 
         # Services in the production environment
         services:
-          # Backend API (FastAPI + LangChain + Logfire)
+          # Backend API (FastAPI + Pydantic AI + Logfire)
           - type: web
             name: logfire-render-api
             runtime: python

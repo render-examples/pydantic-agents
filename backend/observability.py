@@ -153,15 +153,15 @@ def calculate_openai_cost(input_tokens: int, output_tokens: int, model: str) -> 
     from backend.config import PipelineConfig
 
     if "gpt-4o-mini" in model or "gpt-5.4-mini" in model:
-        input_cost = (input_tokens / 1_000_000) * PipelineConfig.GPT4O_MINI_INPUT_COST_PER_M
-        output_cost = (output_tokens / 1_000_000) * PipelineConfig.GPT4O_MINI_OUTPUT_COST_PER_M
+        input_cost = (input_tokens / 1_000_000) * PipelineConfig.GPT54_MINI_INPUT_COST_PER_M
+        output_cost = (output_tokens / 1_000_000) * PipelineConfig.GPT54_MINI_OUTPUT_COST_PER_M
     elif "gpt-4o" in model:
         input_cost = (input_tokens / 1_000_000) * PipelineConfig.GPT4O_INPUT_COST_PER_M
         output_cost = (output_tokens / 1_000_000) * PipelineConfig.GPT4O_OUTPUT_COST_PER_M
     else:
-        # Default to GPT-4o-mini rates
-        input_cost = (input_tokens / 1_000_000) * PipelineConfig.GPT4O_MINI_INPUT_COST_PER_M
-        output_cost = (output_tokens / 1_000_000) * PipelineConfig.GPT4O_MINI_OUTPUT_COST_PER_M
+        # Default to gpt-5.4-mini rates
+        input_cost = (input_tokens / 1_000_000) * PipelineConfig.GPT54_MINI_INPUT_COST_PER_M
+        output_cost = (output_tokens / 1_000_000) * PipelineConfig.GPT54_MINI_OUTPUT_COST_PER_M
 
     return input_cost + output_cost
 
