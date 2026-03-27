@@ -19,8 +19,8 @@ projects:
             runtime: python
             plan: starter
             region: oregon
-            buildCommand: pip install --no-cache-dir -r backend/requirements.txt
-            startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+            buildCommand: uv sync --no-dev --frozen
+            startCommand: uv run uvicorn backend.main:app --host 0.0.0.0 --port $PORT
             healthCheckPath: /health
             envVars:
               # API Keys (will prompt for values on first deploy)
