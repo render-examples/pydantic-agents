@@ -1,5 +1,6 @@
 """Stage 2: RAG Document Retrieval with Multi-Query Expansion."""
 
+import asyncio
 import json
 from typing import List
 
@@ -174,19 +175,13 @@ async def retrieve_documents(embedding: List[float], original_question: str = No
         
         # Retrieve documents for each query variation
         all_docs = {}  # Dict for deduplication by content hash
-        
+
         # Calculate how many docs to retrieve per query
         # Target: ~30-40 total docs before dedup, then take top 20
         docs_per_query = max(10, settings.rag_top_k // len(query_variations) + 5)
-        
-        for i, query in enumerate(query_variations):
-            logfire.debug(f"Retrieving for query {i+1}/{len(query_variations)}: {query}")
-            
-            # Embed the variation
+
+        async def _embed_and_search(i: int, query: str):
             embed_result = await embed_question(query)
-            total_cost += embed_result["cost_usd"]
-            
-            # Retrieve documents using hybrid search for better accuracy
             docs = await vector_store.hybrid_search(
                 query_text=query,
                 query_embedding=embed_result["embedding"],
@@ -194,18 +189,27 @@ async def retrieve_documents(embedding: List[float], original_question: str = No
                 threshold=settings.similarity_threshold,
                 bm25_weight=0.4  # 60% semantic, 40% BM25
             )
-            
+            return i, embed_result["cost_usd"], docs
+
+        query_results = await asyncio.gather(*[
+            _embed_and_search(i, query) for i, query in enumerate(query_variations)
+        ])
+
+        for i, cost, docs in query_results:
+            logfire.debug(f"Retrieved {len(docs)} docs for query {i+1}/{len(query_variations)}")
+            total_cost += cost
+
             # Deduplicate: Keep doc with highest similarity if duplicate content
             for doc in docs:
                 # Use first 200 chars as content hash
                 content_hash = hash(doc.content[:200])
-                
+
                 # CRITICAL: Boost similarity for original query (first query)
                 # Similarity scores across different queries aren't directly comparable
                 # We prioritize results from the original query
                 if i == 1:  # First query (original question)
                     doc.similarity_score = doc.similarity_score * 1.15  # 15% boost for original query
-                
+
                 if content_hash not in all_docs or doc.similarity_score > all_docs[content_hash].similarity_score:
                     all_docs[content_hash] = doc
         
