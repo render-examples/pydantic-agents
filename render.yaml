@@ -68,12 +68,9 @@ projects:
             staticPublishPath: out
             pullRequestPreviewsEnabled: true
             envVars:
-              # API URL (auto-injected from backend service)
+              # API URL - full public URL of the backend service
               - key: NEXT_PUBLIC_API_URL
-                fromService:
-                  name: logfire-render-api
-                  type: web
-                  property: host
+                value: https://logfire-render-api-fqx1.onrender.com
             routes:
               - type: rewrite
                 source: /*
