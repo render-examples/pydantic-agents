@@ -15,7 +15,7 @@ dependencies = [
     "openai>=2.2.0",
     "anthropic>=0.69.0",
     # Observability
-    "logfire[system-metrics,asyncpg,httpx,fastapi]>=4.12.0",
+    "logfire[asyncpg,fastapi,httpx,system-metrics]>=4.12.0",
     # Database
     "pgvector>=0.2.5,<0.3.0",
     "sqlalchemy>=2.0.36",

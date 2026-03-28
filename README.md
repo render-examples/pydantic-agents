@@ -165,7 +165,10 @@ render-qa-assistant/
 - PostgreSQL 16+ (with pgvector extension)
 - OpenAI API key
 - Anthropic API key
-- Logfire account (free tier available) — you'll need a **write token** from Settings > Write Tokens
+- **Logfire account** — sign in at [logfire.pydantic.dev](https://logfire.pydantic.dev), create a project (US region), then:
+  1. **Settings → Write Tokens** → create a token → `LOGFIRE_TOKEN` in `.env`
+  2. **Settings → Read Tokens** → create a token → `LOGFIRE_READ_TOKEN` in `.env`
+  3. View traces in the **Live** panel under your project
 
 ### Local Development (with Make)
 
@@ -173,9 +176,8 @@ render-qa-assistant/
 # 1. Install everything (uv installs Python 3.13 automatically)
 make install
 
-# 2. Set up .env file
-make dev-setup
-# Edit .env and add your API keys!
+# 2. Set up .env file (copy from example and fill in your keys)
+cp .env.example .env
 
 # 3. Start database
 make db-start
