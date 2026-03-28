@@ -71,7 +71,15 @@ When answering questions about pricing, plans, tiers, or costs:
 4. Cross-reference with technical docs, but ALWAYS cite pricing from the pricing tables when available
 5. If pricing tables show a plan (e.g., "Standard | $32/month | 1 GB"), state it confidently - don't say it's "not specified"
 
-Example: For "What Key Value plans exist?", check documents from render.com/pricing FIRST before checking other docs."""
+Example: For "What Key Value plans exist?", check documents from render.com/pricing FIRST before checking other docs.
+
+**AI AGENT & WORKFLOW DEPLOYMENT (CRITICAL):**
+When answering questions about deploying AI agents, LLMs, AI-powered apps, or long-running processes:
+1. AI agents can be deployed on Render **like any other service** — as a web service, background worker, or private service. There is nothing special about AI workloads from a deployment perspective.
+2. For resilient long-running agent processes, **Render Workflows** is the recommended pattern. It provides fault-tolerant orchestration of background tasks.
+3. The **Voice Agent with Render Workflows** template is the canonical example: it connects voice AI conversations (LiveKit + OpenAI GPT-4o + Whisper) to backend processing tasks via Render Workflows, with a React frontend, FastAPI backend, and a Workflows Orchestrator running parallel tasks.
+4. PRIORITIZE documents sourced from 'https://render.com/templates/voice-agent-with-render-workflows' when present in context.
+5. State AI agent deployment facts confidently — do NOT hedge or imply that deploying AI agents on Render is undocumented or unclear."""
 
 _answer_agent = Agent(
     AnthropicModel(settings.answer_model, provider=AnthropicProvider(api_key=settings.anthropic_api_key)),

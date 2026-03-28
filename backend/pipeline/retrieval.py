@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 from typing import List
 
 from backend.config import settings, PipelineConfig
@@ -35,6 +36,81 @@ PRODUCT_KEYWORDS = {
     'cron': ['Render Cron Jobs Pricing'],
     'cron job': ['Render Cron Jobs Pricing'],
 }
+
+# AI/agent keywords that trigger voice agent template injection
+AI_AGENT_KEYWORDS = [
+    'ai agent', 'ai agents', 'llm agent', 'llm', 'language model',
+    'artificial intelligence', 'machine learning', 'deploy ai', 'deploy agent',
+    'long-running', 'long running', 'voice agent', 'render workflows',
+    'agent workflow', 'agent deployment', 'agentic',
+]
+
+# Single-word AI keywords matched with word boundaries to avoid false positives
+AI_AGENT_SINGLE_WORD_KEYWORDS = ['agent', 'agents']
+
+VOICE_AGENT_TEMPLATE_SOURCE = "https://render.com/templates/voice-agent-with-render-workflows"
+
+
+def detect_ai_agent_query(question: str) -> bool:
+    """Detect if the question is asking about AI agents or long-running agent processes."""
+    question_lower = question.lower()
+
+    # Check multi-word and phrase keywords first
+    if any(keyword in question_lower for keyword in AI_AGENT_KEYWORDS):
+        return True
+
+    # Check single-word keywords with word boundaries to avoid false positives
+    # (e.g. "agent" should match but "email" should not match "ai")
+    for keyword in AI_AGENT_SINGLE_WORD_KEYWORDS:
+        if re.search(r'\b' + re.escape(keyword) + r'\b', question_lower):
+            return True
+
+    return False
+
+
+async def inject_ai_agent_docs(question: str, existing_docs: List[Document]) -> List[Document]:
+    """
+    Explicitly fetch and inject the voice agent template doc when AI/agent keywords detected.
+
+    Ensures AI agent questions always get the template context, regardless of semantic search.
+    """
+    if not detect_ai_agent_query(question):
+        return existing_docs
+
+    logfire.info("AI agent query detected, injecting voice agent template doc")
+
+    async with vector_store.pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT content, source, title, section, metadata, embedding
+            FROM documents
+            WHERE source = $1
+            LIMIT 1
+        """, VOICE_AGENT_TEMPLATE_SOURCE)
+
+    if row:
+        metadata = row['metadata']
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+        elif metadata is None:
+            metadata = {}
+
+        doc = Document(
+            content=row['content'],
+            source=row['source'],
+            metadata={
+                'title': row['title'],
+                'section': row['section'] or row['title'],
+                **metadata
+            },
+            similarity_score=0.95
+        )
+        logfire.info("Injected voice agent template document")
+        return [doc] + existing_docs
+
+    logfire.warning(
+        "Voice agent template doc not found in DB — run data/scripts/add_voice_agent_page.py"
+    )
+    return existing_docs
 
 
 def detect_pricing_query(question: str) -> List[str]:
@@ -242,6 +318,16 @@ async def retrieve_documents(embedding: List[float], original_question: str = No
             logfire.info(
                 "Injected pricing tables",
                 tables_injected=len(documents) - pre_injection_count,
+                total_docs=len(documents)
+            )
+
+    # AI AGENT INJECTION: If AI/agent keywords detected, inject voice agent template doc
+    if original_question:
+        pre_injection_count = len(documents)
+        documents = await inject_ai_agent_docs(original_question, documents)
+        if len(documents) > pre_injection_count:
+            logfire.info(
+                "Injected AI agent template doc",
                 total_docs=len(documents)
             )
     
