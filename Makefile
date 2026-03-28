@@ -1,10 +1,10 @@
-# Makefile for Render Q&A Assistant
+# Makefile for Ask Render Anything Assistant
 # Simplifies common development tasks
 
 .PHONY: help install dev-setup db-start db-stop db-reset ingest run-backend run-frontend test clean
 
 help:
-	@echo "Render Q&A Assistant - Development Commands"
+	@echo "Ask Render Anything Assistant - Development Commands"
 	@echo ""
 	@echo "Setup:"
 	@echo "  make install       - Install all dependencies (Python + Node)"

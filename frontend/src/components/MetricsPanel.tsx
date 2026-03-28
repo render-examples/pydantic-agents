@@ -53,9 +53,9 @@ export default function MetricsPanel({ answer }: MetricsPanelProps) {
 
   return (
     <div className="space-y-6">
-      {/* Confidence Score Card */}
+      {/* Confidence score Card */}
       <div className="bg-black border border-zinc-800 p-6 hover:border-zinc-700 transition-colors duration-200">
-        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Confidence Score</h3>
+        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Confidence score</h3>
         
         <div className={`${colors.bg} border ${colors.border} p-4 mb-4`}>
           <div className="flex items-center gap-3 mb-2">
@@ -210,9 +210,9 @@ export default function MetricsPanel({ answer }: MetricsPanelProps) {
         </div>
       )}
 
-      {/* Pipeline Cost Breakdown Card */}
+      {/* Pipeline Cost breakdown Card */}
       <div className="bg-black border border-zinc-800 p-6 hover:border-zinc-700 transition-colors duration-200">
-        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Cost Breakdown</h3>
+        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Cost breakdown</h3>
         
         {/* Summary always visible */}
         <div className="mb-4">

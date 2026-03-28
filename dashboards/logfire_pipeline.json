@@ -1,12 +1,12 @@
 {
   "kind": "Dashboard",
   "metadata": {
-    "name": "Render Q&A Pipeline Overview",
+    "name": "Ask Render Anything Pipeline Overview",
     "project": "logfire-render-demo"
   },
   "spec": {
     "display": {
-      "name": "Render Q&A Pipeline Overview",
+      "name": "Ask Render Anything Pipeline Overview",
       "description": "Real-time monitoring of the 8-stage Q&A pipeline"
     },
     "panels": {

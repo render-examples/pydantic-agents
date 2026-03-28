@@ -71,18 +71,18 @@ export default function QuestionInput({ onSubmit, loading }: QuestionInputProps)
               Processing...
             </span>
           ) : (
-            'Ask question'
+            'Ask'
           )}
         </button>
       </form>
 
       <div className="mt-6 pt-6 border-t border-zinc-800">
-        <p className="text-sm text-zinc-400 mb-3">Try these examples:</p>
+        <p className="text-sm text-zinc-400 mb-3">Example questions</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {exampleQuestions.map((exampleQ, idx) => (
             <button
               key={idx}
-              onClick={() => setQuestion(exampleQ)}
+              onClick={() => { setQuestion(exampleQ); onSubmit(exampleQ) }}
               disabled={loading}
               className="text-left px-3 py-2 text-sm text-zinc-300 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-700 hover:border-purple-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >

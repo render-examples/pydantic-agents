@@ -1,6 +1,6 @@
 # Configuration Guide
 
-Complete reference for all configuration options in the Render Q&A Assistant.
+Complete reference for all configuration options in the Ask Render Anything Assistant.
 
 ## Table of Contents
 

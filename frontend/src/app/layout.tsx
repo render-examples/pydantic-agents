@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Render Q&A Assistant',
+  title: 'Ask Render Anything Assistant',
   description: 'Production-grade AI pipeline with observable AI using Pydantic AI, Logfire, and Render',
   icons: {
     icon: [

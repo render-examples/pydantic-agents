@@ -1,4 +1,4 @@
-"""Configuration settings for the Render Q&A Assistant."""
+"""Configuration settings for the Ask Render Anything Assistant."""
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional

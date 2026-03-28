@@ -56,17 +56,34 @@ export default function Home() {
     <div className="relative z-10 min-h-screen bg-black flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-zinc-800 bg-black/90 backdrop-blur-sm flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div>
-            <h1 className="title-gradient text-2xl font-bold tracking-tight leading-none">
-              Render Q&A
+        <div className="w-full px-4 sm:px-8 lg:px-12 h-24 flex items-center justify-between">
+          <div className="flex flex-col gap-2 items-start">
+            <h1 className="title-gradient text-4xl font-bold tracking-tight leading-none">
+              Ask Render Anything
             </h1>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-sm text-zinc-400">
               Observable RAG pipeline • Multi-query retrieval • Claims verification
             </p>
           </div>
-          <span className="text-sm text-zinc-500 hidden sm:block">
-            Powered by Pydantic AI • Deployed on Render
+          <span className="text-sm text-zinc-500 hidden sm:flex items-center gap-1">
+            Powered by{' '}
+            <a
+              href="https://ai.pydantic.dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-purple-400 transition-colors duration-200"
+            >
+              Pydantic AI
+            </a>
+            {' '}•{' '}Deployed on{' '}
+            <a
+              href="https://render.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-purple-400 transition-colors duration-200"
+            >
+              Render
+            </a>
           </span>
         </div>
       </header>
@@ -120,7 +137,7 @@ export default function Home() {
 
           {/* Right Column - Metrics */}
           <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-24">
+            <div className="lg:sticky lg:top-32">
               {answer ? (
                 <MetricsPanel answer={answer} />
               ) : (

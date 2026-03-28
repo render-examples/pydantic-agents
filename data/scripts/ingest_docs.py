@@ -120,7 +120,7 @@ async def main(force: bool = False):
     await vector_store.close()
     
     print("\n✅ Ingestion complete!")
-    print("\n🎉 Your Render Q&A Assistant is ready to use!")
+    print("\n🎉 Your Ask Render Anything Assistant is ready to use!")
 
 
 if __name__ == "__main__":

@@ -305,7 +305,7 @@ export default function AnswerDisplay({ answer }: AnswerDisplayProps) {
           <div className="space-y-4">
             {/* Overall Summary */}
             <div className="p-4 bg-zinc-900 border border-zinc-800">
-              <h3 className="text-sm font-semibold text-white mb-3">Execution Summary</h3>
+              <h3 className="text-sm font-semibold text-white mb-3">Execution summary</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-zinc-400">Iterations:</span>

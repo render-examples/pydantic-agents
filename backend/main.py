@@ -1,4 +1,4 @@
-"""FastAPI application for Render Q&A Assistant."""
+"""FastAPI application for Ask Render Anything Assistant."""
 
 import time
 from contextlib import asynccontextmanager
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     
     # Startup
-    logfire.info("Starting Render Q&A Assistant")
+    logfire.info("Starting Ask Render Anything Assistant")
     await vector_store.initialize()
     await load_prices()
     logfire.info("Application started successfully")
@@ -51,14 +51,14 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
-    logfire.info("Shutting down Render Q&A Assistant")
+    logfire.info("Shutting down Ask Render Anything Assistant")
     await vector_store.close()
     logfire.info("Application shutdown complete")
 
 
 # Create FastAPI app
 app = FastAPI(
-    title="Render Q&A Assistant",
+    title="Ask Render Anything Assistant",
     description="Production-grade AI pipeline with observable AI using Pydantic AI, Logfire, and Render",
     version="1.0.0",
     lifespan=lifespan
@@ -81,7 +81,7 @@ logfire.instrument_fastapi(app)
 async def root():
     """Root endpoint."""
     return {
-        "name": "Render Q&A Assistant",
+        "name": "Ask Render Anything Assistant",
         "version": "1.0.0",
         "status": "operational"
     }

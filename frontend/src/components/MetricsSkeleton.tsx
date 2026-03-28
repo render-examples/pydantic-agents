@@ -7,9 +7,9 @@ interface MetricsSkeletonProps {
 export default function MetricsSkeleton({ loading }: MetricsSkeletonProps) {
   return (
     <div className="space-y-6">
-      {/* Confidence Score Card */}
+      {/* Confidence score Card */}
       <div className="bg-black border border-zinc-800 p-6">
-        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Confidence Score</h3>
+        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Confidence score</h3>
         
         {loading ? (
           // Skeleton loading state
@@ -74,9 +74,9 @@ export default function MetricsSkeleton({ loading }: MetricsSkeletonProps) {
         )}
       </div>
 
-      {/* Cost Breakdown Card */}
+      {/* Cost breakdown Card */}
       <div className="bg-black border border-zinc-800 p-6">
-        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Cost Breakdown</h3>
+        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Cost breakdown</h3>
         
         {loading ? (
           // Skeleton loading state
