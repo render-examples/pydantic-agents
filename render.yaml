@@ -60,7 +60,8 @@ projects:
                 value: INFO
 
           # Frontend (Next.js Static Site)
-          - type: static
+          - type: web
+            runtime: static
             name: logfire-render-frontend
             domain: askrenderanything.onrender.com
             rootDir: frontend
@@ -73,7 +74,7 @@ projects:
                 fromService:
                   name: logfire-render-api
                   type: web
-                  property: hostURL
+                  property: host
             routes:
               - type: rewrite
                 source: /*
