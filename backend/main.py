@@ -115,6 +115,7 @@ async def execute_pipeline(question: str, session_id: str = None) -> AnswerRespo
             duration_ms=0,  # Tracked by decorator
             cost_usd=embed_result["cost_usd"],
             tokens_used=embed_result["tokens"],
+            model=settings.embedding_model,
             metadata={"embedding_dimensions": len(embed_result["embedding"])}
         )
         stages.append(stage_result)
@@ -127,6 +128,7 @@ async def execute_pipeline(question: str, session_id: str = None) -> AnswerRespo
             success=True,
             duration_ms=0,
             cost_usd=retrieval_result["cost_usd"],
+            model=settings.query_expansion_model,
             metadata={
                 "documents_retrieved": len(retrieval_result["documents"]),
                 "queries_expanded": retrieval_result.get("queries_count", 1)
@@ -157,6 +159,7 @@ async def execute_pipeline(question: str, session_id: str = None) -> AnswerRespo
                 duration_ms=0,
                 cost_usd=gen_result["cost_usd"],
                 tokens_used=gen_result["input_tokens"] + gen_result["output_tokens"],
+                model=settings.answer_model,
                 metadata={
                     "answer_length": len(gen_result["answer"]),
                     "iteration": current_iteration
@@ -165,7 +168,7 @@ async def execute_pipeline(question: str, session_id: str = None) -> AnswerRespo
             stages.append(stage_result)
             total_cost += gen_result["cost_usd"]
             answer_text = gen_result["answer"]
-            
+
             # Stage 4: Claims Extraction
             claims_result = await extract_claims(answer_text)
             claims_count = len(claims_result["claims"])
@@ -175,6 +178,7 @@ async def execute_pipeline(question: str, session_id: str = None) -> AnswerRespo
                 duration_ms=0,
                 cost_usd=claims_result["cost_usd"],
                 tokens_used=claims_result["input_tokens"] + claims_result["output_tokens"],
+                model=settings.claims_model,
                 metadata={
                     "claims_extracted": claims_count,
                     "iteration": current_iteration
@@ -193,6 +197,7 @@ async def execute_pipeline(question: str, session_id: str = None) -> AnswerRespo
                 success=True,
                 duration_ms=0,
                 cost_usd=verification_result["cost_usd"],
+                model=settings.embedding_model,
                 metadata={
                     "claims_verified": verified_count,
                     "total_claims": len(verified_claims),
@@ -202,7 +207,7 @@ async def execute_pipeline(question: str, session_id: str = None) -> AnswerRespo
             )
             stages.append(stage_result)
             total_cost += verification_result["cost_usd"]
-            
+
             # Stages 6 + 7: Technical Accuracy and Quality Evaluation (run in parallel)
             accuracy_result, eval_result = await asyncio.gather(
                 check_accuracy(answer_text, verified_claims),
@@ -217,6 +222,7 @@ async def execute_pipeline(question: str, session_id: str = None) -> AnswerRespo
                 duration_ms=0,
                 cost_usd=accuracy_result["cost_usd"],
                 tokens_used=accuracy_result["input_tokens"] + accuracy_result["output_tokens"],
+                model=settings.accuracy_model,
                 metadata={
                     "accuracy_score": accuracy_score,
                     "iteration": current_iteration
@@ -228,6 +234,7 @@ async def execute_pipeline(question: str, session_id: str = None) -> AnswerRespo
                 success=True,
                 duration_ms=0,
                 cost_usd=eval_result["cost_usd"],
+                model=f"{settings.eval_model_openai} + {settings.eval_model_anthropic}",
                 metadata={
                     "quality_score": f"{average_score:.1f}",
                     "openai_score": evaluations[0].score if len(evaluations) > 0 else None,
@@ -378,6 +385,7 @@ async def pipeline_generator(question: str, session_id: str = None) -> AsyncGene
                 success=True,
                 duration_ms=stage_duration,
                 cost_usd=embed_cost,
+                model=settings.embedding_model,
                 metadata={"embedding_dimensions": len(embed_result["embedding"])}
             ))
             
@@ -398,6 +406,7 @@ async def pipeline_generator(question: str, session_id: str = None) -> AsyncGene
                 success=True,
                 duration_ms=stage_duration,
                 cost_usd=retrieval_cost,
+                model=settings.query_expansion_model,
                 metadata={
                     "documents_retrieved": len(documents),
                     "queries_expanded": retrieval_result.get("queries_count", 1)
@@ -429,6 +438,7 @@ async def pipeline_generator(question: str, session_id: str = None) -> AsyncGene
                     success=True,
                     duration_ms=stage_duration,
                     cost_usd=gen_cost,
+                    model=settings.answer_model,
                     metadata={
                         "answer_length": len(answer_text),
                         "iteration": current_iteration
@@ -451,6 +461,7 @@ async def pipeline_generator(question: str, session_id: str = None) -> AsyncGene
                     success=True,
                     duration_ms=stage_duration,
                     cost_usd=claims_cost,
+                    model=settings.claims_model,
                     metadata={
                         "claims_extracted": claims_count,
                         "iteration": current_iteration
@@ -475,6 +486,7 @@ async def pipeline_generator(question: str, session_id: str = None) -> AsyncGene
                     success=True,
                     duration_ms=stage_duration,
                     cost_usd=verification_cost,
+                    model=settings.embedding_model,
                     metadata={
                         "claims_verified": verified_count,
                         "total_claims": len(verified_claims),
@@ -502,6 +514,7 @@ async def pipeline_generator(question: str, session_id: str = None) -> AsyncGene
                     success=True,
                     duration_ms=stage_duration,
                     cost_usd=accuracy_cost,
+                    model=settings.accuracy_model,
                     metadata={
                         "accuracy_score": accuracy_score,
                         "iteration": current_iteration
@@ -519,6 +532,7 @@ async def pipeline_generator(question: str, session_id: str = None) -> AsyncGene
                     success=True,
                     duration_ms=stage_duration,
                     cost_usd=eval_cost,
+                    model=f"{settings.eval_model_openai} + {settings.eval_model_anthropic}",
                     metadata={
                         "quality_score": f"{average_score:.1f}",
                         "openai_score": evaluations[0].score if len(evaluations) > 0 else None,

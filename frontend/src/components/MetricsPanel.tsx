@@ -270,10 +270,17 @@ export default function MetricsPanel({ answer }: MetricsPanelProps) {
                     key={idx}
                     className="flex justify-between items-center text-sm py-2 border-b border-zinc-800 last:border-b-0"
                   >
-                    <span className="text-zinc-400 capitalize">
-                      {stage.stage.replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-yellow-500 font-mono text-xs">
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-zinc-400 capitalize">
+                        {stage.stage.replace(/_/g, ' ')}
+                      </span>
+                      {stage.model && (
+                        <span className="text-zinc-600 text-xs font-mono">
+                          {stage.model}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-yellow-500 font-mono text-xs shrink-0 ml-2">
                       {formatCost(stage.cost_usd || 0)}
                     </span>
                   </div>

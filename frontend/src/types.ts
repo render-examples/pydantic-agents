@@ -28,6 +28,7 @@ export interface PipelineStageResult {
   duration_ms: number
   cost_usd: number
   tokens_used?: number
+  model?: string
   error?: string
   metadata?: Record<string, any>
 }

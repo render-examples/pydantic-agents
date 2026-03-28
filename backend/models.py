@@ -85,6 +85,7 @@ class PipelineStageResult(BaseModel):
     duration_ms: float = Field(..., description="Stage duration in milliseconds")
     cost_usd: float = Field(0.0, description="Stage cost in USD")
     tokens_used: Optional[int] = Field(None, description="Tokens used")
+    model: Optional[str] = Field(None, description="Model used for this stage")
     error: Optional[str] = Field(None, description="Error message if failed")
     metadata: Optional[dict] = Field(None, description="Stage-specific metadata")
 

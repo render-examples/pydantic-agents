@@ -54,7 +54,7 @@ export default function Home() {
                 Render Q&A
               </h1> 
               <h3 className="mt-1 text-xl text-purple-400">
-                 - hosted on Render, AI observability by Logfire
+                 Powered by Pydantic AI • Deployed on Render
               </h3>
               </div>
               <p className="mt-1 text-sm text-zinc-400">
