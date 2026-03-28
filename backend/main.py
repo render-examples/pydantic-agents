@@ -362,72 +362,105 @@ async def ask_question(request: QuestionRequest):
             raise HTTPException(status_code=500, detail=f"Error processing question: {str(e)}")
 
 
+def _progress_event(stage: str, status: str, message: str, progress: float, cost_so_far: float) -> str:
+    return f"data: {json.dumps(ProgressUpdate(stage=stage, status=status, message=message, progress=progress, cost_so_far=cost_so_far).model_dump())}\n\n"
+
+
+async def _persist_session(
+    question: str,
+    answer_text: str,
+    documents: list,
+    verified_claims: list,
+    evaluations: list,
+    average_score: float,
+    iterations: int,
+    total_cost: float,
+    total_duration_ms: float,
+    stages: list,
+) -> str | None:
+    try:
+        current_span = trace.get_current_span()
+        trace_id = None
+        if current_span and current_span.get_span_context().is_valid:
+            trace_id = format(current_span.get_span_context().trace_id, '032x')
+        saved_id = await vector_store.save_session(
+            question=question,
+            answer=answer_text,
+            sources=[doc.model_dump() for doc in documents],
+            claims=[claim.model_dump() for claim in verified_claims],
+            evaluations=[ev.model_dump() for ev in evaluations],
+            quality_score=average_score,
+            iterations=iterations,
+            total_cost=total_cost,
+            total_duration_ms=total_duration_ms,
+            trace_id=trace_id,
+            stages=[s.model_dump() for s in stages]
+        )
+        logfire.info(f"Saved session to database: {saved_id}", trace_id=trace_id)
+        return saved_id
+    except Exception as e:
+        logfire.error(f"Failed to save session: {e}")
+        return None
+
+
 async def pipeline_generator(question: str, session_id: str = None) -> AsyncGenerator[str, None]:
     """Generator for Server-Sent Events during pipeline execution."""
-    
     try:
-        async with pipeline_trace(question) as context:
-            pipeline_start = time.time()  # Track total duration
+        async with pipeline_trace(question):
+            pipeline_start = time.time()
             total_cost = 0.0
-            progress = 0.0
-            stages = []  # Track stages with costs
-            
+            stages = []
+
             # Stage 1: Embedding
-            yield f"data: {json.dumps(ProgressUpdate(stage='question_embedding', status='started', message='Embedding your question...', progress=5, cost_so_far=total_cost).model_dump())}\n\n"
-            
+            yield _progress_event("question_embedding", "started", "Embedding your question...", 5, total_cost)
             stage_start = time.time()
             embed_result = await embed_question(question)
-            stage_duration = (time.time() - stage_start) * 1000
-            embed_cost = embed_result["cost_usd"]
-            total_cost += embed_cost
-            progress = 12.5
+            total_cost += embed_result["cost_usd"]
             stages.append(PipelineStageResult(
                 stage="question_embedding",
                 success=True,
-                duration_ms=stage_duration,
-                cost_usd=embed_cost,
+                duration_ms=(time.time() - stage_start) * 1000,
+                cost_usd=embed_result["cost_usd"],
                 model=settings.embedding_model,
                 metadata={"embedding_dimensions": len(embed_result["embedding"])}
             ))
-            
-            yield f"data: {json.dumps(ProgressUpdate(stage='question_embedding', status='completed', message='Question embedded', progress=progress, cost_so_far=total_cost).model_dump())}\n\n"
-            
-            # Stage 2: Retrieval (with multi-query expansion for broad questions)
-            yield f"data: {json.dumps(ProgressUpdate(stage='rag_retrieval', status='started', message='Searching documentation...', progress=15, cost_so_far=total_cost).model_dump())}\n\n"
-            
+            yield _progress_event("question_embedding", "completed", "Question embedded", 12.5, total_cost)
+
+            # Stage 2: Retrieval
+            yield _progress_event("rag_retrieval", "started", "Searching documentation...", 15, total_cost)
             stage_start = time.time()
             retrieval_result = await retrieve_documents(embed_result["embedding"], original_question=question)
-            stage_duration = (time.time() - stage_start) * 1000
-            retrieval_cost = retrieval_result["cost_usd"]
-            total_cost += retrieval_cost
-            progress = 25
+            total_cost += retrieval_result["cost_usd"]
             documents = retrieval_result["documents"]
             stages.append(PipelineStageResult(
                 stage="rag_retrieval",
                 success=True,
-                duration_ms=stage_duration,
-                cost_usd=retrieval_cost,
+                duration_ms=(time.time() - stage_start) * 1000,
+                cost_usd=retrieval_result["cost_usd"],
                 model=settings.query_expansion_model,
                 metadata={
                     "documents_retrieved": len(documents),
                     "queries_expanded": retrieval_result.get("queries_count", 1)
                 }
             ))
-            
-            yield f"data: {json.dumps(ProgressUpdate(stage='rag_retrieval', status='completed', message=f'Found {len(documents)} relevant documents', progress=progress, cost_so_far=total_cost).model_dump())}\n\n"
-            
-            # Iterative loop
-            current_iteration = 1
-            feedback = None
-            
-            while current_iteration <= settings.max_iterations:
-                iter_progress_start = 25 + ((current_iteration - 1) * 60 / settings.max_iterations)
-                # Each iteration gets an equal share of the 60% progress (from 25% to 85%)
-                iter_span = 60 / settings.max_iterations
-                
-                # Stage 3: Generation (streamed token-by-token)
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'generation_iter_{current_iteration}', status='started', message=f'Generating answer (iteration {current_iteration})...', progress=min(iter_progress_start + (0.05 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
+            yield _progress_event("rag_retrieval", "completed", f"Found {len(documents)} relevant documents", 25, total_cost)
 
+            # Stages 3–8: iterative refinement
+            # Each iteration gets an equal share of the 25%–85% progress band.
+            iter_span = 60 / settings.max_iterations
+            feedback = None
+            answer_text = ""
+            verified_claims = []
+            accuracy_score = 0
+            evaluations = []
+            average_score = 0.0
+            final_iteration = settings.max_iterations
+
+            for iteration in range(1, settings.max_iterations + 1):
+                p = 25 + (iteration - 1) * iter_span  # progress baseline for this iteration
+
+                # Stage 3: Answer generation (streamed token-by-token)
+                yield _progress_event(f"generation_iter_{iteration}", "started", f"Generating answer (iteration {iteration})...", min(p + 0.05 * iter_span, 95), total_cost)
                 stage_start = time.time()
                 answer_text = ""
                 gen_usage = None
@@ -437,195 +470,150 @@ async def pipeline_generator(question: str, session_id: str = None) -> AsyncGene
                         yield f"data: {json.dumps({'type': 'answer_token', 'delta': delta})}\n\n"
                     elif usage is not None:
                         gen_usage = usage
-                stage_duration = (time.time() - stage_start) * 1000
-
                 input_tokens = (gen_usage.request_tokens or 0) if gen_usage else 0
                 output_tokens = (gen_usage.response_tokens or 0) if gen_usage else 0
                 gen_cost = calculate_anthropic_cost(input_tokens, output_tokens, settings.answer_model)
                 total_cost += gen_cost
                 stages.append(PipelineStageResult(
-                    stage=f"answer_generation_iter_{current_iteration}",
+                    stage=f"answer_generation_iter_{iteration}",
                     success=True,
-                    duration_ms=stage_duration,
+                    duration_ms=(time.time() - stage_start) * 1000,
                     cost_usd=gen_cost,
                     tokens_used=input_tokens + output_tokens,
                     model=settings.answer_model,
-                    metadata={
-                        "answer_length": len(answer_text),
-                        "iteration": current_iteration
-                    }
+                    metadata={"answer_length": len(answer_text), "iteration": iteration}
                 ))
+                yield _progress_event(f"generation_iter_{iteration}", "completed", "Answer generated", min(p + 0.20 * iter_span, 95), total_cost)
 
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'generation_iter_{current_iteration}', status='completed', message='Answer generated', progress=min(iter_progress_start + (0.20 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
-                
-                # Stage 4: Claims
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'claims_iter_{current_iteration}', status='started', message='Extracting factual claims...', progress=min(iter_progress_start + (0.30 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
-                
+                # Stage 4: Claims extraction
+                yield _progress_event(f"claims_iter_{iteration}", "started", "Extracting factual claims...", min(p + 0.30 * iter_span, 95), total_cost)
                 stage_start = time.time()
                 claims_result = await extract_claims(answer_text)
-                stage_duration = (time.time() - stage_start) * 1000
-                claims_cost = claims_result["cost_usd"]
-                total_cost += claims_cost
+                total_cost += claims_result["cost_usd"]
                 claims_count = len(claims_result["claims"])
                 stages.append(PipelineStageResult(
-                    stage=f"claims_extraction_iter_{current_iteration}",
+                    stage=f"claims_extraction_iter_{iteration}",
                     success=True,
-                    duration_ms=stage_duration,
-                    cost_usd=claims_cost,
+                    duration_ms=(time.time() - stage_start) * 1000,
+                    cost_usd=claims_result["cost_usd"],
                     model=settings.claims_model,
-                    metadata={
-                        "claims_extracted": claims_count,
-                        "iteration": current_iteration
-                    }
+                    metadata={"claims_extracted": claims_count, "iteration": iteration}
                 ))
-                
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'claims_iter_{current_iteration}', status='completed', message=f'Extracted {claims_count} claims', progress=min(iter_progress_start + (0.40 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
-                
-                # Stage 5: Verification
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'verification_iter_{current_iteration}', status='started', message='Verifying claims...', progress=min(iter_progress_start + (0.50 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
-                
+                yield _progress_event(f"claims_iter_{iteration}", "completed", f"Extracted {claims_count} claims", min(p + 0.40 * iter_span, 95), total_cost)
+
+                # Stage 5: Claims verification
+                yield _progress_event(f"verification_iter_{iteration}", "started", "Verifying claims...", min(p + 0.50 * iter_span, 95), total_cost)
                 stage_start = time.time()
                 verification_result = await verify_claims(claims_result["claims"])
-                stage_duration = (time.time() - stage_start) * 1000
-                verification_cost = verification_result["cost_usd"]
-                total_cost += verification_cost
+                total_cost += verification_result["cost_usd"]
                 verified_claims = verification_result["verified_claims"]
                 verification_rate = verification_result["verification_rate"] * 100
                 verified_count = len([c for c in verified_claims if c.verified])
                 stages.append(PipelineStageResult(
-                    stage=f"claims_verification_iter_{current_iteration}",
+                    stage=f"claims_verification_iter_{iteration}",
                     success=True,
-                    duration_ms=stage_duration,
-                    cost_usd=verification_cost,
+                    duration_ms=(time.time() - stage_start) * 1000,
+                    cost_usd=verification_result["cost_usd"],
                     model=settings.embedding_model,
                     metadata={
                         "claims_verified": verified_count,
                         "total_claims": len(verified_claims),
                         "verification_rate": f"{verification_rate:.0f}%",
-                        "iteration": current_iteration
+                        "iteration": iteration
                     }
                 ))
-                
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'verification_iter_{current_iteration}', status='completed', message=f'{verification_rate:.0f}% claims verified', progress=min(iter_progress_start + (0.60 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
-                
-                # Stages 6 + 7: Accuracy and Evaluation (run in parallel)
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'accuracy_iter_{current_iteration}', status='started', message='Checking accuracy & quality in parallel...', progress=min(iter_progress_start + (0.70 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
+                yield _progress_event(f"verification_iter_{iteration}", "completed", f"{verification_rate:.0f}% claims verified", min(p + 0.60 * iter_span, 95), total_cost)
 
+                # Stages 6 + 7: Accuracy and quality evaluation (parallel)
+                yield _progress_event(f"accuracy_iter_{iteration}", "started", "Checking accuracy & quality in parallel...", min(p + 0.70 * iter_span, 95), total_cost)
                 stage_start = time.time()
                 accuracy_result, eval_result = await asyncio.gather(
                     check_accuracy(answer_text, verified_claims),
                     evaluate_quality(question, answer_text, documents),
                 )
-                stage_duration = (time.time() - stage_start) * 1000
-                accuracy_cost = accuracy_result["cost_usd"]
-                total_cost += accuracy_cost
+                parallel_duration = (time.time() - stage_start) * 1000
+
                 accuracy_score = accuracy_result["accuracy_score"]
+                total_cost += accuracy_result["cost_usd"]
                 stages.append(PipelineStageResult(
-                    stage=f"accuracy_check_iter_{current_iteration}",
+                    stage=f"accuracy_check_iter_{iteration}",
                     success=True,
-                    duration_ms=stage_duration,
-                    cost_usd=accuracy_cost,
+                    duration_ms=parallel_duration,
+                    cost_usd=accuracy_result["cost_usd"],
                     model=settings.accuracy_model,
-                    metadata={
-                        "accuracy_score": accuracy_score,
-                        "iteration": current_iteration
-                    }
+                    metadata={"accuracy_score": accuracy_score, "iteration": iteration}
                 ))
+                yield _progress_event(f"accuracy_iter_{iteration}", "completed", f"Accuracy score: {accuracy_score}/100", min(p + 0.80 * iter_span, 95), total_cost)
 
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'accuracy_iter_{current_iteration}', status='completed', message=f'Accuracy score: {accuracy_score}/100', progress=min(iter_progress_start + (0.80 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
-
-                eval_cost = eval_result["cost_usd"]
-                total_cost += eval_cost
                 evaluations = eval_result["evaluations"]
                 average_score = eval_result["average_score"]
+                total_cost += eval_result["cost_usd"]
                 stages.append(PipelineStageResult(
-                    stage=f"quality_evaluation_iter_{current_iteration}",
+                    stage=f"quality_evaluation_iter_{iteration}",
                     success=True,
-                    duration_ms=stage_duration,
-                    cost_usd=eval_cost,
+                    duration_ms=parallel_duration,
+                    cost_usd=eval_result["cost_usd"],
                     model=f"{settings.eval_model_openai} + {settings.eval_model_anthropic}",
                     metadata={
                         "quality_score": f"{average_score:.1f}",
-                        "openai_score": evaluations[0].score if len(evaluations) > 0 else None,
+                        "openai_score": evaluations[0].score if evaluations else None,
                         "claude_score": evaluations[1].score if len(evaluations) > 1 else None,
                         "agreement": eval_result.get("agreement_level", "unknown"),
-                        "iteration": current_iteration
+                        "iteration": iteration
                     }
                 ))
+                yield _progress_event(f"evaluation_iter_{iteration}", "completed", f"Quality score: {average_score:.1f}/100", min(p + 0.90 * iter_span, 95), total_cost)
 
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'evaluation_iter_{current_iteration}', status='completed', message=f'Quality score: {average_score:.1f}/100', progress=min(iter_progress_start + (0.90 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
-                
-                # Stage 8: Quality Gate
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'quality_gate_iter_{current_iteration}', status='started', message='Checking quality gate...', progress=min(iter_progress_start + (0.95 * iter_span), 95), cost_so_far=total_cost).model_dump())}\n\n"
-                
+                # Stage 8: Quality gate
+                yield _progress_event(f"quality_gate_iter_{iteration}", "started", "Checking quality gate...", min(p + 0.95 * iter_span, 95), total_cost)
                 gate_result = await quality_gate_decision(
                     average_score=average_score,
                     evaluations=evaluations,
                     accuracy_score=accuracy_score,
-                    current_iteration=current_iteration,
+                    current_iteration=iteration,
                     errors=accuracy_result["errors"],
                     corrections=accuracy_result["corrections"]
                 )
-                
-                if not gate_result["should_iterate"]:
-                    yield f"data: {json.dumps(ProgressUpdate(stage=f'quality_gate_iter_{current_iteration}', status='completed', message='Quality gate passed!', progress=95, cost_so_far=total_cost).model_dump())}\n\n"
-                    
-                    # Calculate total duration
-                    total_duration_ms = (time.time() - pipeline_start) * 1000
-                    
-                    # Send final result
-                    response = AnswerResponse(
-                        question=question,
-                        answer=answer_text,
-                        sources=documents,
-                        claims=verified_claims,
-                        quality_score=average_score,
-                        accuracy_score=accuracy_score,
-                        evaluations=evaluations,
-                        iterations=current_iteration,
-                        total_cost=total_cost,
-                        total_duration_ms=total_duration_ms,
-                        stages=stages,
-                        session_id=session_id
-                    )
-                    
-                    # Save session to database
-                    try:
-                        # Capture current trace ID
-                        current_span = trace.get_current_span()
-                        trace_id = None
-                        if current_span and current_span.get_span_context().is_valid:
-                            trace_id = format(current_span.get_span_context().trace_id, '032x')
-                        
-                        saved_session_id = await vector_store.save_session(
-                            question=question,
-                            answer=answer_text,
-                            sources=[doc.model_dump() for doc in documents],
-                            claims=[claim.model_dump() for claim in verified_claims],
-                            evaluations=[ev.model_dump() for ev in evaluations],
-                            quality_score=average_score,
-                            iterations=current_iteration,
-                            total_cost=total_cost,
-                            total_duration_ms=total_duration_ms,
-                            trace_id=trace_id,
-                            stages=[s.model_dump() for s in stages]
-                        )
-                        logfire.info(f"Saved session to database: {saved_session_id}", trace_id=trace_id)
-                        
-                        # Update response with saved session ID
-                        response.session_id = saved_session_id
-                    except Exception as e:
-                        logfire.error(f"Failed to save session: {e}")
-                    
-                    yield f"data: {json.dumps({'type': 'complete', 'result': response.model_dump(mode='json')})}\n\n"
-                    break
-                
-                gate_reason = gate_result["reason"]
-                yield f"data: {json.dumps(ProgressUpdate(stage=f'quality_gate_iter_{current_iteration}', status='completed', message=f'Refining answer... ({gate_reason})', progress=min(iter_progress_start + iter_span, 85), cost_so_far=total_cost).model_dump())}\n\n"
-                
-                feedback = gate_result["feedback"]
-                current_iteration += 1
-    
+
+                if gate_result["should_iterate"]:
+                    yield _progress_event(f"quality_gate_iter_{iteration}", "completed", f"Refining answer... ({gate_result['reason']})", min(p + iter_span, 85), total_cost)
+                    feedback = gate_result["feedback"]
+                    continue
+
+                yield _progress_event(f"quality_gate_iter_{iteration}", "completed", "Quality gate passed!", 95, total_cost)
+                final_iteration = iteration
+                break
+
+            # Send final result — reached here by gate passing (break) or exhausting iterations.
+            total_duration_ms = (time.time() - pipeline_start) * 1000
+            response = AnswerResponse(
+                question=question,
+                answer=answer_text,
+                sources=documents,
+                claims=verified_claims,
+                quality_score=average_score,
+                accuracy_score=accuracy_score,
+                evaluations=evaluations,
+                iterations=final_iteration,
+                total_cost=total_cost,
+                total_duration_ms=total_duration_ms,
+                stages=stages,
+                session_id=session_id
+            )
+            response.session_id = await _persist_session(
+                question=question,
+                answer_text=answer_text,
+                documents=documents,
+                verified_claims=verified_claims,
+                evaluations=evaluations,
+                average_score=average_score,
+                iterations=final_iteration,
+                total_cost=total_cost,
+                total_duration_ms=total_duration_ms,
+                stages=stages,
+            )
+            yield f"data: {json.dumps({'type': 'complete', 'result': response.model_dump(mode='json')})}\n\n"
+
     except Exception as e:
         logfire.error(f"Error in pipeline generator: {e}", exc_info=True)
         yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
