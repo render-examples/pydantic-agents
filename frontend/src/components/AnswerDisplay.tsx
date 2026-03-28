@@ -93,7 +93,7 @@ export default function AnswerDisplay({ answer }: AnswerDisplayProps) {
                   : 'border-transparent text-zinc-400 hover:text-zinc-300'
               }`}
             >
-              AI Pipeline ({answer.stages.length} stages)
+              AI pipeline ({answer.stages.length} stages)
             </button>
           )}
           {answer.session_id && (

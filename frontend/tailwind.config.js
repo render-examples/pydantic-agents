@@ -8,6 +8,8 @@ export default {
     extend: {
       fontFamily: {
         'roobert': ['Roobert', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        'sans': ['"SF Mono"', 'Menlo', 'Monaco', 'Consolas', '"Courier New"', 'monospace'],
+        'mono': ['"SF Mono"', 'Menlo', 'Monaco', 'Consolas', '"Courier New"', 'monospace'],
       },
       colors: {
         primary: {
@@ -30,6 +32,13 @@ export default {
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'gradient-shift': 'gradient-shift 4s ease infinite',
+      },
+      keyframes: {
+        'gradient-shift': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
       },
       typography: (theme) => ({
         DEFAULT: {

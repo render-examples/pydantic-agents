@@ -44,7 +44,7 @@ export default function QuestionInput({ onSubmit, loading }: QuestionInputProps)
           <textarea
             id="question"
             rows={4}
-            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-purple-600 resize-none"
+            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none hover:border-zinc-600 focus:border-purple-600 resize-none transition-all duration-200"
             placeholder="e.g., How do I deploy a Python FastAPI app on Render?"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -60,7 +60,7 @@ export default function QuestionInput({ onSubmit, loading }: QuestionInputProps)
         <button
           type="submit"
           disabled={loading || !question.trim()}
-          className="w-full px-6 py-3 bg-purple-600 text-white font-medium border border-purple-600 hover:bg-purple-700 hover:border-purple-700 focus:outline-none focus:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          className="w-full px-6 py-3 bg-purple-600 text-white font-medium border border-purple-600 hover:bg-purple-700 hover:border-purple-700 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] focus:outline-none focus:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
         >
           {loading ? (
             <span className="flex items-center justify-center">
@@ -71,7 +71,7 @@ export default function QuestionInput({ onSubmit, loading }: QuestionInputProps)
               Processing...
             </span>
           ) : (
-            'Ask Question'
+            'Ask question'
           )}
         </button>
       </form>
@@ -84,7 +84,7 @@ export default function QuestionInput({ onSubmit, loading }: QuestionInputProps)
               key={idx}
               onClick={() => setQuestion(exampleQ)}
               disabled={loading}
-              className="text-left px-3 py-2 text-sm text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-yellow-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-left px-3 py-2 text-sm text-zinc-300 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-700 hover:border-purple-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exampleQ}
             </button>

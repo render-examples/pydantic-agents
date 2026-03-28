@@ -2,16 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* If you have Roobert font files, add them here:
-@font-face {
-  font-family: 'Roobert';
-  src: url('/fonts/Roobert-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-*/
-
 :root {
   --background: #000;
   --foreground: rgba(255, 255, 255, 0.87);
@@ -20,7 +10,78 @@
 body {
   color: var(--foreground);
   background: var(--background);
+  font-family: "SF Mono", Menlo, Monaco, Consolas, "Courier New", monospace;
   font-feature-settings: 'rlig' 1, 'calt' 1;
+}
+
+/* Grid background — trender-style purple dot grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Scanline overlay — retro tech feel */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Custom scrollbar — purple accent */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #8b5cf6;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #7c3aed;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #8b5cf6 #000;
+}
+
+/* Animated gradient title */
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.title-gradient {
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #8b5cf6 40%,
+    #a78bfa 60%,
+    #ffffff 100%
+  );
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 4s ease infinite;
 }
 
 @layer utilities {
@@ -29,8 +90,6 @@ body {
   }
 }
 
-/* Code styling - consistent monospace font */
 code {
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-family: "SF Mono", Menlo, Monaco, "Courier New", monospace;
 }
-

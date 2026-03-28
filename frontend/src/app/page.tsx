@@ -48,86 +48,53 @@ export default function Home() {
 
   const handleLoadSession = (session: AnswerResponse) => {
     setAnswer(session)
-    setProgress([]) // Clear progress since this is a loaded session
+    setProgress([])
     setError(null)
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="relative z-10 min-h-screen bg-black flex flex-col">
       {/* Header */}
-      <header className="border-b border-zinc-800 bg-black flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="inline-flex gap-2 items-end">  
-                <h1 className="text-3xl font-light font-roobert text-white">
-                Render Q&A
-              </h1> 
-              <h3 className="mt-1 text-xl text-purple-400">
-                 Powered by Pydantic AI • Deployed on Render
-              </h3>
-              </div>
-              <p className="mt-1 text-sm text-zinc-400">
-                Observable RAG pipeline • Multi-query retrieval • Claims verification
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setHistoryOpen(!historyOpen)}
-                className="text-sm text-zinc-400 hover:text-purple-600 transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                History
-              </button>
-              <a
-                href="https://ai.pydantic.dev/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-zinc-400 hover:text-purple-600 transition-colors flex items-center gap-1.5"
-              >
-                Pydantic AI
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-              <a
-                href="https://logfire.pydantic.dev/docs/why/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-zinc-400 hover:text-purple-600 transition-colors flex items-center gap-1.5"
-              >
-                Logfire
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-              <a
-                href="https://render.com/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-zinc-400 hover:text-purple-600 transition-colors flex items-center gap-1.5"
-              >
-                Render Docs
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
+      <header className="sticky top-0 z-20 border-b border-zinc-800 bg-black/90 backdrop-blur-sm flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div>
+            <h1 className="title-gradient text-2xl font-bold tracking-tight leading-none">
+              Render Q&A
+            </h1>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Observable RAG pipeline • Multi-query retrieval • Claims verification
+            </p>
           </div>
+          <span className="text-sm text-zinc-500 hidden sm:block">
+            Powered by Pydantic AI • Deployed on Render
+          </span>
         </div>
       </header>
 
-      {/* Main Content - Always 2-column layout */}
+      {/* Sub-header: History button strip */}
+      <div className="relative z-10 border-b border-zinc-900 bg-black">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex justify-end">
+          <button
+            onClick={() => setHistoryOpen(!historyOpen)}
+            className="text-sm text-zinc-400 hover:text-purple-400 transition-all duration-200 flex items-center gap-2 px-3 py-1.5 border border-zinc-800 hover:border-purple-800"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            History
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
           {/* Left Column - Input & Answer */}
           <div className="lg:col-span-2 space-y-6">
             <QuestionInput onSubmit={handleAskQuestion} loading={loading} />
-            
+
             {error && (
-              <div className="bg-red-500/10 border border-red-500/50 p-4">
+              <div className="bg-red-500/10 border border-red-500/50 p-4 transition-colors">
                 <p className="text-red-400 text-sm">{error}</p>
               </div>
             )}
@@ -153,7 +120,7 @@ export default function Home() {
 
           {/* Right Column - Metrics */}
           <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-8">
+            <div className="lg:sticky lg:top-24">
               {answer ? (
                 <MetricsPanel answer={answer} />
               ) : (
@@ -165,7 +132,7 @@ export default function Home() {
       </main>
 
       {/* History Panel */}
-      <HistoryPanel 
+      <HistoryPanel
         onLoadSession={handleLoadSession}
         isOpen={historyOpen}
         onToggle={() => setHistoryOpen(!historyOpen)}
@@ -173,27 +140,46 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-zinc-800 bg-black flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center text-sm text-zinc-400">
-            <p>
-              Built with{' '}
-              {' '}•{' '}
-              <a href="https://pydantic.dev/pydantic-ai" className="text-purple-600 hover:text-purple-500">
-                Pydantic AI
-              </a>
-              {' '}•{' '}
-              <a href="https://www.pydantic.dev/logfire" className="text-purple-600 hover:text-purple-500">
-                Logfire
-              </a>
-              {' '}•{' '}
-              <a href="https://render.com" className="text-purple-600 hover:text-purple-500">
-                Render
-              </a>
-            </p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-center gap-6 text-sm text-zinc-500">
+            <a
+              href="https://ai.pydantic.dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-purple-400 transition-colors flex items-center gap-1"
+            >
+              Pydantic AI
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+            <span>•</span>
+            <a
+              href="https://logfire.pydantic.dev/docs/why/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-purple-400 transition-colors flex items-center gap-1"
+            >
+              Logfire
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+            <span>•</span>
+            <a
+              href="https://render.com/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-purple-400 transition-colors flex items-center gap-1"
+            >
+              Render Docs
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
           </div>
         </div>
       </footer>
     </div>
   )
 }
-
