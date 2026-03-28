@@ -5,9 +5,10 @@ import { useState, FormEvent } from 'react'
 interface QuestionInputProps {
   onSubmit: (question: string) => void
   loading: boolean
+  onHistoryToggle?: () => void
 }
 
-export default function QuestionInput({ onSubmit, loading }: QuestionInputProps) {
+export default function QuestionInput({ onSubmit, loading, onHistoryToggle }: QuestionInputProps) {
   const [question, setQuestion] = useState('')
 
   const handleSubmit = (e: FormEvent) => {
@@ -38,9 +39,23 @@ export default function QuestionInput({ onSubmit, loading }: QuestionInputProps)
     <div className="bg-black border border-zinc-800 p-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="question" className="block text-sm font-medium text-zinc-300 mb-2">
-            Ask a question about Render
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label htmlFor="question" className="text-sm font-medium text-zinc-300">
+              What do you want to know about Render?
+            </label>
+            {onHistoryToggle && (
+              <button
+                type="button"
+                onClick={onHistoryToggle}
+                className="text-sm text-zinc-400 hover:text-purple-400 transition-all duration-200 flex items-center gap-2 px-3 py-1.5 border border-zinc-800 hover:border-purple-800"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                History
+              </button>
+            )}
+          </div>
           <textarea
             id="question"
             rows={4}

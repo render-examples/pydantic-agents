@@ -88,27 +88,12 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Sub-header: History button strip */}
-      <div className="relative z-10 border-b border-zinc-900 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex justify-end">
-          <button
-            onClick={() => setHistoryOpen(!historyOpen)}
-            className="text-sm text-zinc-400 hover:text-purple-400 transition-all duration-200 flex items-center gap-2 px-3 py-1.5 border border-zinc-800 hover:border-purple-800"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            History
-          </button>
-        </div>
-      </div>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
           {/* Left Column - Input & Answer */}
           <div className="lg:col-span-2 space-y-6">
-            <QuestionInput onSubmit={handleAskQuestion} loading={loading} />
+            <QuestionInput onSubmit={handleAskQuestion} loading={loading} onHistoryToggle={() => setHistoryOpen(!historyOpen)} />
 
             {error && (
               <div className="bg-red-500/10 border border-red-500/50 p-4 transition-colors">
