@@ -269,10 +269,8 @@ class VectorStore:
         # Convert embedding list to pgvector format string
         embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
         
-        # Prepare text query for full-text search
-        # Convert to tsquery format: "free tier web service" -> "free & tier & web & service"
-        query_terms = query_text.lower().split()
-        tsquery = ' & '.join(query_terms)
+        # Pass raw query text; plainto_tsquery handles tokenization and strips special chars
+        tsquery = query_text
         
         async with self.pool.acquire() as conn:
             # Fetch more results from each method to ensure good coverage
@@ -305,7 +303,7 @@ class VectorStore:
                     metadata,
                     ts_rank_cd(content_tsv, query) as bm25_score
                 FROM documents, 
-                     to_tsquery('english', $1) as query
+                     plainto_tsquery('english', $1) as query
                 WHERE content_tsv @@ query
                 ORDER BY bm25_score DESC
                 LIMIT $2
