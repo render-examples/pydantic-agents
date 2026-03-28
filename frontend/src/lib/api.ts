@@ -1,10 +1,6 @@
 import type { AnswerResponse, ProgressUpdate } from '../types'
 
-// In production, NEXT_PUBLIC_API_URL will be the Render service hostname
-// In development, it falls back to localhost
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
-  ? `https://${process.env.NEXT_PUBLIC_API_URL}.onrender.com` 
-  : 'http://localhost:8000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export async function askQuestion(
   question: string,
