@@ -152,64 +152,6 @@ export default function MetricsPanel({ answer }: MetricsPanelProps) {
         )}
       </div>
 
-      {/* Evaluations Card */}
-      {answer.evaluations.length > 0 && (
-        <div className="bg-black border border-zinc-800 p-6 hover:border-zinc-700 transition-colors duration-200">
-          <h3 className="text-lg font-semibold text-zinc-300 mb-4">Evaluations</h3>
-
-          {/* Average score */}
-          <div className="text-center py-3 mb-4">
-            <div className="text-3xl font-bold text-purple-600 mb-1">
-              {Math.round(answer.evaluations.reduce((sum, e) => sum + e.score, 0) / answer.evaluations.length)}/100
-            </div>
-            <p className="text-xs text-zinc-400">
-              Average across {answer.evaluations.length} evaluation{answer.evaluations.length > 1 ? 's' : ''}
-            </p>
-          </div>
-
-          {/* Per-evaluation breakdown — always visible */}
-          <div className="border-t border-zinc-800 pt-4 space-y-4">
-            {answer.evaluations.map((evaluation, idx) => (
-              <div key={idx} className="border-t border-zinc-800 pt-4 first:border-t-0 first:pt-0">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm font-medium text-zinc-300">
-                    {evaluation.model.includes('gpt') ? 'OpenAI' : 'Anthropic'}
-                  </span>
-                  <span className="text-sm font-medium text-purple-600">
-                    {evaluation.score}/100
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-zinc-400">Technical accuracy</span>
-                    <span className="text-zinc-300">{evaluation.technical_accuracy}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-zinc-400">Clarity</span>
-                    <span className="text-zinc-300">{evaluation.clarity}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-zinc-400">Completeness</span>
-                    <span className="text-zinc-300">{evaluation.completeness}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-zinc-400">Developer value</span>
-                    <span className="text-zinc-300">{evaluation.developer_value}</span>
-                  </div>
-                </div>
-
-                {evaluation.feedback && (
-                  <p className="mt-3 text-xs text-zinc-400 italic">
-                    &ldquo;{evaluation.feedback}&rdquo;
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Pipeline Cost breakdown Card */}
       <div className="bg-black border border-zinc-800 p-6 hover:border-zinc-700 transition-colors duration-200">
         <h3 className="text-lg font-semibold text-zinc-300 mb-4">Cost breakdown</h3>
@@ -271,6 +213,64 @@ export default function MetricsPanel({ answer }: MetricsPanelProps) {
           </>
         )}
       </div>
+
+      {/* Evaluations Card */}
+      {answer.evaluations.length > 0 && (
+        <div className="bg-black border border-zinc-800 p-6 hover:border-zinc-700 transition-colors duration-200">
+          <h3 className="text-lg font-semibold text-zinc-300 mb-4">Evaluations</h3>
+
+          {/* Average score */}
+          <div className="text-center py-3 mb-4">
+            <div className="text-3xl font-bold text-purple-600 mb-1">
+              {Math.round(answer.evaluations.reduce((sum, e) => sum + e.score, 0) / answer.evaluations.length)}/100
+            </div>
+            <p className="text-xs text-zinc-400">
+              Average across {answer.evaluations.length} evaluation{answer.evaluations.length > 1 ? 's' : ''}
+            </p>
+          </div>
+
+          {/* Per-evaluation breakdown — always visible */}
+          <div className="border-t border-zinc-800 pt-4 space-y-4">
+            {answer.evaluations.map((evaluation, idx) => (
+              <div key={idx} className="border-t border-zinc-800 pt-4 first:border-t-0 first:pt-0">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-medium text-zinc-300">
+                    {evaluation.model.includes('gpt') ? 'OpenAI' : 'Anthropic'}
+                  </span>
+                  <span className="text-sm font-medium text-purple-600">
+                    {evaluation.score}/100
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-400">Technical accuracy</span>
+                    <span className="text-zinc-300">{evaluation.technical_accuracy}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-400">Clarity</span>
+                    <span className="text-zinc-300">{evaluation.clarity}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-400">Completeness</span>
+                    <span className="text-zinc-300">{evaluation.completeness}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-400">Developer value</span>
+                    <span className="text-zinc-300">{evaluation.developer_value}</span>
+                  </div>
+                </div>
+
+                {evaluation.feedback && (
+                  <p className="mt-3 text-xs text-zinc-400 italic">
+                    &ldquo;{evaluation.feedback}&rdquo;
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

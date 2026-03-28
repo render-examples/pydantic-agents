@@ -37,10 +37,41 @@ export default function MetricsSkeleton({ loading }: MetricsSkeletonProps) {
         )}
       </div>
 
+      {/* Cost breakdown Card */}
+      <div className="bg-black border border-zinc-800 p-6">
+        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Cost breakdown</h3>
+
+        {loading ? (
+          // Skeleton loading state
+          <div className="space-y-2 animate-pulse">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-b-0">
+                <div className="h-3 w-32 bg-zinc-900 rounded"></div>
+                <div className="h-3 w-16 bg-zinc-900 rounded"></div>
+              </div>
+            ))}
+            <div className="mt-4 pt-4 border-t border-zinc-800 flex justify-between">
+              <div className="h-4 w-24 bg-zinc-800 rounded"></div>
+              <div className="h-4 w-20 bg-zinc-800 rounded"></div>
+            </div>
+          </div>
+        ) : (
+          // Placeholder state
+          <div className="text-center py-8">
+            <div className="text-zinc-700 mb-2">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-sm text-zinc-600">Per-stage breakdown</p>
+          </div>
+        )}
+      </div>
+
       {/* Evaluations Card */}
       <div className="bg-black border border-zinc-800 p-6">
         <h3 className="text-lg font-semibold text-zinc-300 mb-4">Evaluations</h3>
-        
+
         {loading ? (
           // Skeleton loading state
           <div className="space-y-4 animate-pulse">
@@ -70,37 +101,6 @@ export default function MetricsSkeleton({ loading }: MetricsSkeletonProps) {
               </svg>
             </div>
             <p className="text-sm text-zinc-600">Dual-model scoring</p>
-          </div>
-        )}
-      </div>
-
-      {/* Cost breakdown Card */}
-      <div className="bg-black border border-zinc-800 p-6">
-        <h3 className="text-lg font-semibold text-zinc-300 mb-4">Cost breakdown</h3>
-        
-        {loading ? (
-          // Skeleton loading state
-          <div className="space-y-2 animate-pulse">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-b-0">
-                <div className="h-3 w-32 bg-zinc-900 rounded"></div>
-                <div className="h-3 w-16 bg-zinc-900 rounded"></div>
-              </div>
-            ))}
-            <div className="mt-4 pt-4 border-t border-zinc-800 flex justify-between">
-              <div className="h-4 w-24 bg-zinc-800 rounded"></div>
-              <div className="h-4 w-20 bg-zinc-800 rounded"></div>
-            </div>
-          </div>
-        ) : (
-          // Placeholder state
-          <div className="text-center py-8">
-            <div className="text-zinc-700 mb-2">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <p className="text-sm text-zinc-600">Per-stage breakdown</p>
           </div>
         )}
       </div>
