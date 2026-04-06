@@ -5,11 +5,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 export async function askQuestion(
   question: string,
   onProgress?: (update: ProgressUpdate) => void,
-  onAnswerToken?: (delta: string) => void
+  onAnswerToken?: (delta: string) => void,
+  signal?: AbortSignal
 ): Promise<AnswerResponse> {
   if (onProgress) {
     // Use streaming endpoint
-    return askQuestionStream(question, onProgress, onAnswerToken)
+    return askQuestionStream(question, onProgress, onAnswerToken, signal)
   } else {
     // Use regular endpoint
     const response = await fetch(`${API_BASE_URL}/ask`, {
@@ -18,6 +19,7 @@ export async function askQuestion(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ question }),
+      signal,
     })
 
     if (!response.ok) {
@@ -31,7 +33,8 @@ export async function askQuestion(
 async function askQuestionStream(
   question: string,
   onProgress: (update: ProgressUpdate) => void,
-  onAnswerToken?: (delta: string) => void
+  onAnswerToken?: (delta: string) => void,
+  signal?: AbortSignal
 ): Promise<AnswerResponse> {
   const response = await fetch(`${API_BASE_URL}/ask/stream`, {
     method: 'POST',
@@ -39,6 +42,7 @@ async function askQuestionStream(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ question }),
+    signal,
   })
 
   if (!response.ok) {
@@ -55,8 +59,18 @@ async function askQuestionStream(
   let finalResult: AnswerResponse | null = null
 
   while (true) {
+    if (signal?.aborted) {
+      reader.cancel()
+      throw new DOMException('Aborted', 'AbortError')
+    }
+
     const { done, value } = await reader.read()
-    
+
+    if (signal?.aborted) {
+      reader.cancel()
+      throw new DOMException('Aborted', 'AbortError')
+    }
+
     if (done) {
       break
     }

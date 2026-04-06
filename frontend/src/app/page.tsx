@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import QuestionInput from '@/components/QuestionInput'
@@ -19,8 +19,23 @@ export default function Home() {
   const [streamingAnswer, setStreamingAnswer] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  const handleStop = () => {
+    abortControllerRef.current?.abort()
+    abortControllerRef.current = null
+    setLoading(false)
+    setProgress([])
+    setStreamingAnswer('')
+    setAnswer(null)
+    setError(null)
+  }
 
   const handleAskQuestion = async (question: string) => {
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     setLoading(true)
     setProgress([])
     setAnswer(null)
@@ -35,14 +50,19 @@ export default function Home() {
         },
         (delta) => {
           setStreamingAnswer((prev) => prev + delta)
-        }
+        },
+        controller.signal
       )
 
       setAnswer(result)
     } catch (err) {
+      if (controller.signal.aborted) {
+        return
+      }
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
+      abortControllerRef.current = null
     }
   }
 
@@ -58,7 +78,7 @@ export default function Home() {
       <header className="sticky top-0 z-20 border-b border-zinc-800 bg-black/90 backdrop-blur-sm flex-shrink-0">
         <div className="w-full px-4 sm:px-8 lg:px-12 h-24 flex items-end justify-between pb-3">
           <div className="flex flex-col gap-2 items-start">
-            <h1 className="title-gradient text-4xl font-bold tracking-tight leading-none">
+            <h1 className="title-gradient text-4xl font-bold tracking-tight leading-tight">
               Ask Render Anything
             </h1>
             <p className="text-sm text-zinc-400">
@@ -93,7 +113,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
           {/* Left Column - Input & Answer */}
           <div className="lg:col-span-2 space-y-6">
-            <QuestionInput onSubmit={handleAskQuestion} loading={loading} onHistoryToggle={() => setHistoryOpen(!historyOpen)} />
+            <QuestionInput onSubmit={handleAskQuestion} loading={loading} onHistoryToggle={() => setHistoryOpen(!historyOpen)} onStop={handleStop} />
 
             {error && (
               <div className="bg-red-500/10 border border-red-500/50 p-4 transition-colors">

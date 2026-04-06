@@ -6,6 +6,7 @@ interface QuestionInputProps {
   onSubmit: (question: string) => void
   loading: boolean
   onHistoryToggle?: () => void
+  onStop?: () => void
 }
 
 function sanitizeInput(raw: string): string {
@@ -24,11 +25,14 @@ function sanitizeInput(raw: string): string {
   return s
 }
 
-export default function QuestionInput({ onSubmit, loading, onHistoryToggle }: QuestionInputProps) {
+export default function QuestionInput({ onSubmit, loading, onHistoryToggle, onStop }: QuestionInputProps) {
   const [question, setQuestion] = useState('')
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
+  }
+
+  const handleAsk = () => {
     if (question.trim() && !loading) {
       onSubmit(question.trim())
     }
@@ -38,9 +42,7 @@ export default function QuestionInput({ onSubmit, loading, onHistoryToggle }: Qu
     // Submit on Enter (without Shift)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      if (question.trim() && !loading) {
-        onSubmit(question.trim())
-      }
+      handleAsk()
     }
   }
 
@@ -89,18 +91,19 @@ export default function QuestionInput({ onSubmit, loading, onHistoryToggle }: Qu
         </div>
 
         <button
-          type="submit"
-          disabled={loading || !question.trim()}
-          className="w-full px-6 py-3 bg-purple-600 text-white font-medium border border-purple-600 hover:bg-purple-700 hover:border-purple-700 hover:shadow-[0_0_15px_#00fff0,0_0_30px_rgba(0,255,240,0.25)] focus:outline-none focus:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          type="button"
+          onClick={loading ? onStop : handleAsk}
+          disabled={!loading && !question.trim()}
+          className={loading
+            ? "w-full px-6 py-3 bg-purple-700 text-white font-medium border border-purple-600 hover:bg-purple-800 hover:border-purple-700 focus:outline-none transition-all duration-200 flex items-center justify-center gap-3"
+            : "w-full px-6 py-3 bg-purple-600 text-white font-medium border border-purple-600 hover:bg-purple-700 hover:border-purple-700 hover:shadow-[0_0_15px_#00fff0,0_0_30px_rgba(0,255,240,0.25)] focus:outline-none focus:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          }
         >
           {loading ? (
-            <span className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Processing...
-            </span>
+            <>
+              <span className="inline-flex items-center justify-center w-5 h-5 bg-white rounded-sm flex-shrink-0" aria-hidden="true" />
+              Stop
+            </>
           ) : (
             'Ask'
           )}

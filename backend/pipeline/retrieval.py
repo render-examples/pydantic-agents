@@ -50,6 +50,25 @@ AI_AGENT_SINGLE_WORD_KEYWORDS = ['agent', 'agents']
 
 VOICE_AGENT_TEMPLATE_SOURCE = "https://render.com/templates/voice-agent-with-render-workflows"
 
+# Autoscaling keywords
+AUTOSCALING_KEYWORDS = [
+    'autoscaling', 'autoscale', 'auto-scaling', 'auto scaling',
+    'horizontal scaling', 'scale automatically', 'automatically scale',
+    'scale up', 'scale down', 'min instances', 'max instances',
+    'scaling policy', 'scale based on',
+]
+AUTOSCALING_SINGLE_WORD_KEYWORDS = ['scaling']
+AUTOSCALING_DOC_SOURCE = "https://render.com/docs/scaling"
+
+# Node.js deployment keywords
+NODEJS_KEYWORDS = [
+    'node.js', 'nodejs', 'node js', 'express', 'deploy node',
+    'npm start', 'npm install', 'next.js', 'nextjs', 'deploy next',
+    'vite', 'javascript app', 'js app', 'deploy javascript',
+]
+NODEJS_SINGLE_WORD_KEYWORDS = ['node']
+NODEJS_DOC_SOURCE = "https://render.com/docs/deploy-node-express-app"
+
 
 def detect_ai_agent_query(question: str) -> bool:
     """Detect if the question is asking about AI agents or long-running agent processes."""
@@ -109,6 +128,124 @@ async def inject_ai_agent_docs(question: str, existing_docs: List[Document]) -> 
 
     logfire.warning(
         "Voice agent template doc not found in DB — run data/scripts/add_voice_agent_page.py"
+    )
+    return existing_docs
+
+
+def detect_autoscaling_query(question: str) -> bool:
+    """Detect if the question is asking about autoscaling or scaling configuration."""
+    question_lower = question.lower()
+
+    if any(keyword in question_lower for keyword in AUTOSCALING_KEYWORDS):
+        return True
+
+    for keyword in AUTOSCALING_SINGLE_WORD_KEYWORDS:
+        if re.search(r'\b' + re.escape(keyword) + r'\b', question_lower):
+            return True
+
+    return False
+
+
+async def inject_autoscaling_docs(question: str, existing_docs: List[Document]) -> List[Document]:
+    """
+    Explicitly fetch and inject autoscaling docs when scaling keywords detected.
+
+    Ensures autoscaling questions always get the scaling context, regardless of semantic search.
+    """
+    if not detect_autoscaling_query(question):
+        return existing_docs
+
+    logfire.info("Autoscaling query detected, injecting autoscaling doc")
+
+    async with vector_store.pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT content, source, title, section, metadata, embedding
+            FROM documents
+            WHERE source = $1
+            LIMIT 1
+        """, AUTOSCALING_DOC_SOURCE)
+
+    if row:
+        metadata = row['metadata']
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+        elif metadata is None:
+            metadata = {}
+
+        doc = Document(
+            content=row['content'],
+            source=row['source'],
+            metadata={
+                'title': row['title'],
+                'section': row['section'] or row['title'],
+                **metadata
+            },
+            similarity_score=0.95
+        )
+        logfire.info("Injected autoscaling document")
+        return [doc] + existing_docs
+
+    logfire.warning(
+        "Autoscaling doc not found in DB — run data/scripts/add_autoscaling_page.py"
+    )
+    return existing_docs
+
+
+def detect_nodejs_query(question: str) -> bool:
+    """Detect if the question is asking about deploying Node.js or JavaScript apps."""
+    question_lower = question.lower()
+
+    if any(keyword in question_lower for keyword in NODEJS_KEYWORDS):
+        return True
+
+    for keyword in NODEJS_SINGLE_WORD_KEYWORDS:
+        if re.search(r'\b' + re.escape(keyword) + r'\b', question_lower):
+            return True
+
+    return False
+
+
+async def inject_nodejs_docs(question: str, existing_docs: List[Document]) -> List[Document]:
+    """
+    Explicitly fetch and inject Node.js deployment docs when Node.js keywords detected.
+
+    Ensures Node.js deployment questions always get the relevant context.
+    """
+    if not detect_nodejs_query(question):
+        return existing_docs
+
+    logfire.info("Node.js query detected, injecting Node.js deployment doc")
+
+    async with vector_store.pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT content, source, title, section, metadata, embedding
+            FROM documents
+            WHERE source = $1
+            LIMIT 1
+        """, NODEJS_DOC_SOURCE)
+
+    if row:
+        metadata = row['metadata']
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+        elif metadata is None:
+            metadata = {}
+
+        doc = Document(
+            content=row['content'],
+            source=row['source'],
+            metadata={
+                'title': row['title'],
+                'section': row['section'] or row['title'],
+                **metadata
+            },
+            similarity_score=0.95
+        )
+        logfire.info("Injected Node.js deployment document")
+        return [doc] + existing_docs
+
+    logfire.warning(
+        "Node.js deployment doc not found in DB — run data/scripts/add_nodejs_page.py"
     )
     return existing_docs
 
@@ -330,7 +467,27 @@ async def retrieve_documents(embedding: List[float], original_question: str = No
                 "Injected AI agent template doc",
                 total_docs=len(documents)
             )
-    
+
+    # AUTOSCALING INJECTION: If scaling keywords detected, inject autoscaling doc
+    if original_question:
+        pre_injection_count = len(documents)
+        documents = await inject_autoscaling_docs(original_question, documents)
+        if len(documents) > pre_injection_count:
+            logfire.info(
+                "Injected autoscaling doc",
+                total_docs=len(documents)
+            )
+
+    # NODE.JS INJECTION: If Node.js/JavaScript deployment keywords detected, inject Node.js doc
+    if original_question:
+        pre_injection_count = len(documents)
+        documents = await inject_nodejs_docs(original_question, documents)
+        if len(documents) > pre_injection_count:
+            logfire.info(
+                "Injected Node.js deployment doc",
+                total_docs=len(documents)
+            )
+
     # Calculate average similarity
     avg_similarity = 0.0
     if documents:

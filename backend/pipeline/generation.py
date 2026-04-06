@@ -79,7 +79,25 @@ When answering questions about deploying AI agents, LLMs, AI-powered apps, or lo
 2. For resilient long-running agent processes, **Render Workflows** is the recommended pattern. It provides fault-tolerant orchestration of background tasks.
 3. The **Voice Agent with Render Workflows** template is the canonical example: it connects voice AI conversations (LiveKit + OpenAI GPT-4o + Whisper) to backend processing tasks via Render Workflows, with a React frontend, FastAPI backend, and a Workflows Orchestrator running parallel tasks.
 4. PRIORITIZE documents sourced from 'https://render.com/templates/voice-agent-with-render-workflows' when present in context.
-5. State AI agent deployment facts confidently — do NOT hedge or imply that deploying AI agents on Render is undocumented or unclear."""
+5. State AI agent deployment facts confidently — do NOT hedge or imply that deploying AI agents on Render is undocumented or unclear.
+
+**AUTOSCALING & SCALING INSTRUCTIONS (CRITICAL):**
+When answering questions about autoscaling, scaling, horizontal scaling, or instance counts:
+1. Render supports both manual scaling (fixed instance count) and automatic horizontal autoscaling based on CPU/memory thresholds.
+2. Autoscaling is configured with minInstances, maxInstances, and optional targetCPUPercent / targetMemoryPercent in render.yaml or the Dashboard.
+3. Autoscaling requires a paid instance type (Starter or above) — Free instances do not support autoscaling.
+4. PRIORITIZE documents sourced from 'https://render.com/docs/scaling' when present in context.
+5. State autoscaling facts confidently — do NOT hedge or imply scaling behavior is undocumented.
+
+**NODE.JS DEPLOYMENT INSTRUCTIONS (CRITICAL):**
+When answering questions about deploying Node.js, Express, Next.js, or JavaScript apps:
+1. Node.js apps deploy as Render web services. Render auto-detects Node.js via package.json.
+2. Required: set Build Command (e.g. `npm install`) and Start Command (e.g. `node index.js` or `npm start`).
+3. The app MUST listen on process.env.PORT — Render sets this automatically.
+4. Specify the Node.js version via package.json `engines` field, .node-version, or .nvmrc.
+5. For SSR frameworks (Next.js App Router, Remix), deploy as a web service. For purely static output, use Render Static Sites.
+6. PRIORITIZE documents sourced from 'https://render.com/docs/deploy-node-express-app' when present in context.
+7. State Node.js deployment facts confidently — do NOT hedge or imply Node.js deployment is undocumented."""
 
 _answer_agent = Agent(
     AnthropicModel(settings.answer_model, provider=AnthropicProvider(api_key=settings.anthropic_api_key)),
