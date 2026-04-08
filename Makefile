@@ -1,7 +1,7 @@
 # Makefile for Ask Render Anything Assistant
 # Simplifies common development tasks
 
-.PHONY: help install dev-setup db-start db-stop db-reset ingest run-backend run-frontend test clean
+.PHONY: help install dev-setup db-start db-stop db-reset ingest add-pricing add-voice-agent add-autoscaling add-nodejs run-backend run-frontend test clean
 
 help:
 	@echo "Ask Render Anything Assistant - Development Commands"
@@ -14,7 +14,11 @@ help:
 	@echo "  make db-start      - Start PostgreSQL with Docker"
 	@echo "  make db-stop       - Stop PostgreSQL"
 	@echo "  make db-reset      - Reset database (delete all data)"
-	@echo "  make ingest        - Generate embeddings and load into database"
+	@echo "  make ingest        - Generate embeddings and load into database (includes all special pages)"
+	@echo "  make add-pricing   - Re-add only the pricing page"
+	@echo "  make add-voice-agent - Re-add only the voice agent template"
+	@echo "  make add-autoscaling - Re-add only the autoscaling docs"
+	@echo "  make add-nodejs    - Re-add only the Node.js docs"
 	@echo ""
 	@echo "Development:"
 	@echo "  make run-backend   - Run backend API (port 8000)"
@@ -81,6 +85,12 @@ ingest:
 	@echo ""
 	@echo "📊 Loading embeddings into database..."
 	uv run python data/scripts/ingest_docs.py
+	@echo ""
+	@echo "🏷️  Adding special pages (pricing, AI agent, autoscaling, Node.js)..."
+	uv run python data/scripts/add_pricing_page.py
+	uv run python data/scripts/add_voice_agent_page.py
+	uv run python data/scripts/add_autoscaling_page.py
+	uv run python data/scripts/add_nodejs_page.py
 	@echo "✅ Documentation ingested!"
 
 add-pricing:
@@ -89,6 +99,25 @@ add-pricing:
 	@echo ""
 	uv run python data/scripts/add_pricing_page.py
 	@echo "✅ Pricing data added!"
+
+add-voice-agent:
+	@echo "🤖 Adding voice agent template page to vector database..."
+	@echo "This ensures AI agent deployment questions get the right context"
+	@echo ""
+	uv run python data/scripts/add_voice_agent_page.py
+	@echo "✅ Voice agent template added!"
+
+add-autoscaling:
+	@echo "📈 Adding autoscaling documentation to vector database..."
+	@echo ""
+	uv run python data/scripts/add_autoscaling_page.py
+	@echo "✅ Autoscaling docs added!"
+
+add-nodejs:
+	@echo "🟩 Adding Node.js deployment documentation to vector database..."
+	@echo ""
+	uv run python data/scripts/add_nodejs_page.py
+	@echo "✅ Node.js docs added!"
 
 run-backend:
 	@echo "🚀 Starting backend API on http://localhost:8000"
