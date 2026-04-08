@@ -59,5 +59,4 @@ htmlcov/
 Thumbs.db
 
 # Data
-data/embeddings/render_docs.json
 

@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-async def main(force: bool = False):
+async def main(force: bool = False, skip_if_exists: bool = False):
     """Load embeddings from JSON and insert into database."""
     
     print("🚀 Starting Render documentation ingestion")
@@ -36,6 +36,10 @@ async def main(force: bool = False):
             print("🔄 Force mode: Deleting existing documents...")
             await vector_store.delete_all_documents()
             print("✅ Deleted")
+        elif skip_if_exists:
+            print("⏭️  Skip-if-exists mode: database already populated, skipping ingestion")
+            await vector_store.close()
+            return
         else:
             response = input("Delete existing documents and re-ingest? (y/N): ")
             if response.lower() == 'y':
@@ -125,9 +129,11 @@ async def main(force: bool = False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ingest Render documentation into PostgreSQL")
-    parser.add_argument('--force', '-f', action='store_true', 
+    parser.add_argument('--force', '-f', action='store_true',
                        help='Force re-ingestion without confirmation')
+    parser.add_argument('--skip-if-exists', action='store_true',
+                       help='Skip ingestion silently if documents already exist (safe for deploy hooks)')
     args = parser.parse_args()
-    
-    asyncio.run(main(force=args.force))
+
+    asyncio.run(main(force=args.force, skip_if_exists=args.skip_if_exists))
 
