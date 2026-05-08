@@ -1,6 +1,6 @@
-# Render Developer Q&A Assistant
+# Pydantic Agents
 
-> A demo AI pipeline showcasing observable AI with Pydantic AI, Logfire, and Render
+> Render Developer Q&A Assistant showcasing observable AI with Pydantic Agents, Pydantic Embedder, Logfire, and Render
 
 An intelligent question-answering system that demonstrates real-world AI observability patterns. This example project shows how to build, instrument, and monitor a multi-stage LLM pipeline with full cost tracking, quality evaluation, and performance monitoring.
 
