@@ -1,12 +1,12 @@
 projects:
-  - name: logfire-render-demo
+  - name: pydantic-agents
     environments:
       - name: production
         # PostgreSQL database with pgvector extension
         databases:
-          - name: logfire-render-db
-            databaseName: render_qa_db
-            user: render_qa_user
+          - name: pydantic-agents-db
+            databaseName: pydantic_agents_db
+            user: pydantic_agents_user
             plan: basic-1gb
             region: oregon
             postgresMajorVersion: "17"
@@ -15,7 +15,7 @@ projects:
         services:
           # Backend API (FastAPI + Pydantic AI + Logfire)
           - type: web
-            name: logfire-render-api
+            name: pydantic-agents-api
             runtime: python
             plan: starter
             region: oregon
@@ -36,7 +36,7 @@ projects:
               # Database connection (auto-injected from database)
               - key: DATABASE_URL
                 fromDatabase:
-                  name: logfire-render-db
+                  name: pydantic-agents-db
                   property: connectionString
               # Pipeline configuration
               - key: QUALITY_THRESHOLD
@@ -63,7 +63,7 @@ projects:
           # Frontend (Next.js Static Site)
           - type: web
             runtime: static
-            name: logfire-render-frontend
+            name: pydantic-agents-frontend
             rootDir: frontend
             buildCommand: rm -rf node_modules/.cache .next out && npm ci && npm run build
             staticPublishPath: out
@@ -71,7 +71,7 @@ projects:
             envVars:
               # API URL - full public URL of the backend service
               - key: NEXT_PUBLIC_API_URL
-                value: https://logfire-render-api-fqx1.onrender.com
+                value: https://pydantic-agents-api-fqx1.onrender.com
             routes:
               - type: rewrite
                 source: /*
