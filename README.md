@@ -198,6 +198,15 @@ make run-backend
 make run-frontend
 ```
 
+`make ingest` runs the full pipeline: bulk doc embeddings, plus the curated "special pages" that get explicit-injection into RAG context (pricing, AI agent template, autoscaling, Node.js). To re-load just one of those after editing its script, use the per-target shortcuts:
+
+```bash
+make add-pricing      # render.com/pricing tables
+make add-ai-agent     # render.com/templates/self-orchestrating-agents-python
+make add-autoscaling  # render.com/docs/scaling
+make add-nodejs       # render.com/docs/deploy-node-express-app
+```
+
 ### Manual Setup
 
 ```bash
@@ -275,7 +284,7 @@ After the backend deploys, copy its public URL (`https://pydantic-agents-api-XXX
 - Backend: `https://pydantic-agents-api-XXXX.onrender.com`
 - Frontend: `https://pydantic-agents-frontend-XXXX.onrender.com`
 
-Doc ingestion runs automatically as a `preDeployCommand` on every backend deploy (skipped if data already exists).
+Doc ingestion runs automatically as a `preDeployCommand` on every backend deploy. The bulk corpus is loaded once via `ingest_docs.py --skip-if-exists`; the curated special pages (`add_pricing_page.py`, `add_ai_agent_template_page.py`, `add_autoscaling_page.py`, `add_nodejs_page.py`) re-run on every deploy so canonical answers stay in sync with the latest source pages.
 
 ---
 
