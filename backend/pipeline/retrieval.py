@@ -37,18 +37,18 @@ PRODUCT_KEYWORDS = {
     'cron job': ['Render Cron Jobs Pricing'],
 }
 
-# AI/agent keywords that trigger voice agent template injection
+# AI/agent keywords that trigger AI agent template injection
 AI_AGENT_KEYWORDS = [
     'ai agent', 'ai agents', 'llm agent', 'llm', 'language model',
     'artificial intelligence', 'machine learning', 'deploy ai', 'deploy agent',
-    'long-running', 'long running', 'voice agent', 'render workflows',
+    'long-running', 'long running', 'self-orchestrating', 'render workflows',
     'agent workflow', 'agent deployment', 'agentic',
 ]
 
 # Single-word AI keywords matched with word boundaries to avoid false positives
 AI_AGENT_SINGLE_WORD_KEYWORDS = ['agent', 'agents']
 
-VOICE_AGENT_TEMPLATE_SOURCE = "https://render.com/templates/voice-agent-with-render-workflows"
+AI_AGENT_TEMPLATE_SOURCE = "https://render.com/templates/self-orchestrating-agents-python"
 
 # Autoscaling keywords
 AUTOSCALING_KEYWORDS = [
@@ -89,14 +89,14 @@ def detect_ai_agent_query(question: str) -> bool:
 
 async def inject_ai_agent_docs(question: str, existing_docs: List[Document]) -> List[Document]:
     """
-    Explicitly fetch and inject the voice agent template doc when AI/agent keywords detected.
+    Explicitly fetch and inject the AI agent template doc when AI/agent keywords detected.
 
     Ensures AI agent questions always get the template context, regardless of semantic search.
     """
     if not detect_ai_agent_query(question):
         return existing_docs
 
-    logfire.info("AI agent query detected, injecting voice agent template doc")
+    logfire.info("AI agent query detected, injecting AI agent template doc")
 
     async with vector_store.pool.acquire() as conn:
         row = await conn.fetchrow("""
@@ -104,7 +104,7 @@ async def inject_ai_agent_docs(question: str, existing_docs: List[Document]) -> 
             FROM documents
             WHERE source = $1
             LIMIT 1
-        """, VOICE_AGENT_TEMPLATE_SOURCE)
+        """, AI_AGENT_TEMPLATE_SOURCE)
 
     if row:
         metadata = row['metadata']
@@ -123,11 +123,11 @@ async def inject_ai_agent_docs(question: str, existing_docs: List[Document]) -> 
             },
             similarity_score=0.95
         )
-        logfire.info("Injected voice agent template document")
+        logfire.info("Injected AI agent template document")
         return [doc] + existing_docs
 
     logfire.warning(
-        "Voice agent template doc not found in DB — run data/scripts/add_voice_agent_page.py"
+        "AI agent template doc not found in DB — run data/scripts/add_ai_agent_template_page.py"
     )
     return existing_docs
 

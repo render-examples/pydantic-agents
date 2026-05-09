@@ -236,8 +236,8 @@ cd frontend && npm install && npm run dev
 
 Before clicking the deploy button, sign in at [logfire.pydantic.dev](https://logfire.pydantic.dev), create a project (US region), and generate two tokens:
 
-- **Settings → Write Tokens** → create token → save as `LOGFIRE_TOKEN`
-- **Settings → Read Tokens** → create token → save as `LOGFIRE_READ_TOKEN`
+- **Preferences → Write Tokens** → create token → save as `LOGFIRE_TOKEN`
+- **Preferences → Read Tokens** → create token → save as `LOGFIRE_READ_TOKEN`
 
 You'll paste both into the Render Dashboard in step 3.
 
