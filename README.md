@@ -2,7 +2,11 @@
 
 > Render Developer Q&A Assistant showcasing observable AI with Pydantic Agents, Pydantic Embedder, Logfire, and Render
 
-An intelligent question-answering system that demonstrates real-world AI observability patterns. This example project shows how to build, instrument, and monitor a multi-stage LLM pipeline with full cost tracking, quality evaluation, and performance monitoring.
+<a href="https://render.com/deploy?repo=https://github.com/render-examples/logfire-pydantic">
+  <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="32">
+</a>
+
+Intelligent question-answering system that demonstrates real-world AI observability patterns. This example project shows how to build, instrument, and monitor a multi-stage LLM pipeline with full cost tracking, quality evaluation, and performance monitoring.
 
 ## Table of Contents
 
@@ -64,13 +68,15 @@ The app answers questions about deployment, databases, pricing, configuration, n
 - **Custom Metrics** - Business-specific metrics (cost, quality, iterations)
 - **SQL Queries** - Custom analytics on AI performance
 
-### Pydantic AI Patterns
+### Pydantic Stack
 
-- **Typed Agents** - Each pipeline stage uses a `pydantic_ai.Agent` with a structured `output_type` enforced by Pydantic models
-- **Multi-Provider Orchestration** - Claude and GPT-5.4-mini agents in a single pipeline via `AnthropicProvider` / `OpenAIProvider`
-- **Parallel Evaluation** - Dual-model quality rating runs concurrently with `asyncio.gather()`
-- **Structured Outputs** - Claims, accuracy scores, and eval dimensions are parsed directly into Pydantic models (e.g. `ClaimsOutput`, `EvaluationOutput`)
-- **Usage Tracking** - Per-agent token counts via `result.usage()` feed into per-stage cost attribution
+This project is built end-to-end on the [Pydantic](https://pydantic.dev/) ecosystem:
+
+- **[Pydantic AI Agents](https://ai.pydantic.dev/agents/)** — every pipeline stage (generation, claims extraction, accuracy check, dual-rater evaluation) is a `pydantic_ai.Agent` with a typed `output_type`. Multi-provider orchestration (Claude + GPT) runs through `OpenAIProvider` / `AnthropicProvider` in a single pipeline. See [`backend/pipeline/`](./backend/pipeline/).
+- **[Pydantic Embedder](https://ai.pydantic.dev/embeddings/)** — `pydantic_ai.Embedder` with `OpenAIEmbeddingModel` powers question embedding (`embed_query`) and batch claim embedding (`embed_documents`) for verification. Auto-instrumented by `logfire.instrument_pydantic_ai()`. See [`backend/pipeline/embeddings.py`](./backend/pipeline/embeddings.py) and [`backend/pipeline/verification.py`](./backend/pipeline/verification.py).
+- **[Pydantic Models](https://docs.pydantic.dev/)** — Claims, accuracy scores, eval dimensions, and pipeline state are parsed directly into Pydantic models (e.g. `ClaimsOutput`, `EvaluationOutput`). `pydantic-settings` manages config in [`backend/config.py`](./backend/config.py).
+- **[Pydantic GenAI Prices](https://github.com/pydantic/genai-prices)** — model pricing is loaded dynamically from the `pydantic/genai-prices` registry, then combined with per-agent token counts from `result.usage()` to produce per-stage cost attribution. See [`backend/prices.py`](./backend/prices.py).
+- **[Logfire](https://logfire.pydantic.dev/)** — distributed traces, custom metrics, dual-model evals, and cost attribution. Auto-instruments FastAPI, AsyncPG, HTTPX, and Pydantic AI. See [`backend/observability.py`](./backend/observability.py).
 
 ### Render Capabilities
 
@@ -226,36 +232,50 @@ cd frontend && npm install && npm run dev
 
 ## Deploy to Render
 
-1. **Fork this repository**
+### 1. Set up a Logfire account.
 
-2. **Create Render account** at https://render.com
+Before clicking the deploy button, sign in at [logfire.pydantic.dev](https://logfire.pydantic.dev), create a project (US region), and generate two tokens:
 
-3. **In Render Dashboard:**
+- **Settings → Write Tokens** → create token → save as `LOGFIRE_TOKEN`
+- **Settings → Read Tokens** → create token → save as `LOGFIRE_READ_TOKEN`
 
-   - Click "New +" → "Blueprint"
-   - Connect your forked repository
-   - Render reads `render.yaml` and creates:
-     - PostgreSQL database with pgvector
-     - Web Service (backend API)
-     - Static Site (frontend)
+You'll paste both into the Render Dashboard in step 3.
 
-4. **Set environment variables:**
+### 2. One-click deploy
 
-   - `OPENAI_API_KEY` (required)
-   - `ANTHROPIC_API_KEY` (required)
-   - `LOGFIRE_TOKEN` (required) — write token from [logfire.pydantic.dev](https://logfire.pydantic.dev) under Settings > Write Tokens
+<a href="https://render.com/deploy?repo=https://github.com/render-examples/logfire-pydantic">
+  <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="32">
+</a>
 
-5. **Deploy completes in ~5 minutes**
+Render reads [`render.yaml`](./render.yaml) and provisions:
 
-   - Backend: `https://your-service.onrender.com`
-   - Frontend: `https://your-app.onrender.com`
+- PostgreSQL database with pgvector (`pydantic-agents-db`)
+- Backend API web service (`pydantic-agents-api`, FastAPI + Pydantic AI + Logfire)
+- Frontend static site (`pydantic-agents-frontend`, Next.js)
 
-6. **Initialize the database:**
+### 3. Fill in environment variables
 
-```bash
-# Run the ingestion script on your deployed service
-curl -X POST https://your-service.onrender.com/admin/ingest-docs
-```
+You'll be prompted only for these four secrets:
+
+| Variable | Source |
+|---|---|
+| `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com/api-keys) |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| `LOGFIRE_TOKEN` | Logfire write token from step 1 |
+| `LOGFIRE_READ_TOKEN` | Logfire read token from step 1 |
+
+**Auto-filled by Render (no action needed):** `DATABASE_URL` (injected from the database service), `QUALITY_THRESHOLD`, `ACCURACY_THRESHOLD`, `MAX_ITERATIONS`, `MAX_TOKENS`, `RAG_TOP_K`, `SIMILARITY_THRESHOLD`, `VERIFICATION_THRESHOLD`, `ENABLE_CACHING`, `LOG_LEVEL`.
+
+### 4. Wire the frontend to the backend
+
+After the backend deploys, copy its public URL (`https://pydantic-agents-api-XXXX.onrender.com`) and set it as the `NEXT_PUBLIC_API_URL` env var on the **frontend** service. Trigger a redeploy of the frontend so the new value takes effect.
+
+### 5. Done
+
+- Backend: `https://pydantic-agents-api-XXXX.onrender.com`
+- Frontend: `https://pydantic-agents-frontend-XXXX.onrender.com`
+
+Doc ingestion runs automatically as a `preDeployCommand` on every backend deploy (skipped if data already exists).
 
 ---
 
