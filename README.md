@@ -2,7 +2,7 @@
 
 > Render Developer Q&A Assistant showcasing observable AI with Pydantic Agents, Pydantic Embedder, Logfire, and Render
 
-<a href="https://render.com/deploy?repo=https://github.com/render-examples/logfire-pydantic">
+<a href="https://render.com/deploy?repo=https://github.com/render-examples/pydantic-agents">
   <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="32">
 </a>
 
@@ -243,7 +243,7 @@ You'll paste both into the Render Dashboard in step 3.
 
 ### 2. One-click deploy
 
-<a href="https://render.com/deploy?repo=https://github.com/render-examples/logfire-pydantic">
+<a href="https://render.com/deploy?repo=https://github.com/render-examples/pydantic-agents">
   <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="32">
 </a>
 
